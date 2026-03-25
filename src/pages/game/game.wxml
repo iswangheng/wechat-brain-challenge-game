@@ -6,7 +6,7 @@
       <text class="progress-sep">/</text>
       <text class="progress-total">{{progress.total}}</text>
     </view>
-    <view class="hint-btn {{showHint ? 'used' : ''}}" bindtap="onUseHint">
+    <view wx:if="{{level.hint}}" class="hint-btn {{showHint ? 'used' : ''}}" bindtap="onUseHint">
       <text>💡 提示</text>
     </view>
   </view>
