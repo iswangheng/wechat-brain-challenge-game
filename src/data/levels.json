@@ -306,7 +306,7 @@
       "question": "什么东西嘴里没有舌头？",
       "options": ["鞋", "包", "瓶子", "手套"],
       "answer": 0,
-      "explanation": "鞋子有鞋舌，但嘴里没有舌头！等等...鞋有舌头啊。答案是鞋——因为鞋的'嘴'里的'舌头'不是真舌头！",
+      "explanation": "鞋虽然有'鞋舌'，但那不是真舌头——它的'嘴'里可没有真正的舌头！",
       "funnyComment": "绕晕了没？🤪",
       "shareText": "什么东西嘴里没有舌头？"
     },
@@ -395,8 +395,8 @@
       "interaction": {
         "method": "tilt",
         "sensor": "accelerometer",
-        "threshold": { "x": 30 },
-        "successCondition": "tilt_left_or_right"
+        "axis": "x",
+        "threshold": 30
       },
       "hint": "试试倾斜你的手机",
       "explanation": "倾斜手机就能把水倒出来啦！",
@@ -704,8 +704,8 @@
       "difficulty": 3,
       "question": "10个人站成一排，第3个人说'我后面有6个人'，他说的对吗？",
       "options": ["对", "不对，有7个", "不对，有8个", "不确定"],
-      "answer": 0,
-      "explanation": "第3个人后面确实有7个人！所以他说的不对！等等...他说6个人...你选了'对'？仔细想想！",
+      "answer": 1,
+      "explanation": "第3个人后面有10-3=7个人，他说6个人，当然不对！",
       "funnyComment": "数学是体育老师教的？🧮",
       "shareText": "10个人排队，第3个后面有几个？"
     },
@@ -741,8 +741,8 @@
       "difficulty": 3,
       "question": "什么东西以光速旅行却一动不动？",
       "options": ["闪电", "光", "光纤", "时间"],
-      "answer": 1,
-      "explanation": "光以光速旅行，但光本身是不'动'的——它就是光！（禅意脑筋急转弯）",
+      "answer": 3,
+      "explanation": "时间以光速流逝，但你永远看不到它'动'——它无形无影却从不停歇！",
       "funnyComment": "这道题有点哲学了 🤔✨",
       "shareText": "什么东西以光速旅行却不动？"
     },
