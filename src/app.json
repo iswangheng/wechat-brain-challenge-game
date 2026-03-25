@@ -12,11 +12,5 @@
     "navigationBarTextStyle": "white",
     "backgroundColor": "#F5F5F5"
   },
-  "usingComponents": {
-    "question-card": "/components/QuestionCard/QuestionCard",
-    "option-button": "/components/OptionButton/OptionButton",
-    "share-card": "/components/ShareCard/ShareCard",
-    "ad-banner": "/components/AdBanner/AdBanner",
-    "leaderboard": "/components/Leaderboard/Leaderboard"
-  }
+  "usingComponents": {}
 }

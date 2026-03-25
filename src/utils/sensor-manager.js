@@ -8,22 +8,26 @@ let gyroscopeCallback = null;
 let shakeCallback = null;
 let lastShakeTime = 0;
 let shakeThreshold = 15;
+let accelHandler = null;
+let gyroHandler = null;
 
 /**
  * Start accelerometer listener
  * @param {Function} callback - receives { x, y, z }
  */
 const startAccelerometer = (callback) => {
+  stopAccelerometer();
   accelerometerCallback = callback;
+  accelHandler = (res) => {
+    if (accelerometerCallback) {
+      accelerometerCallback(res);
+    }
+    _checkShake(res);
+  };
   wx.startAccelerometer({
     interval: "game",
     success: () => {
-      wx.onAccelerometerChange((res) => {
-        if (accelerometerCallback) {
-          accelerometerCallback(res);
-        }
-        _checkShake(res);
-      });
+      wx.onAccelerometerChange(accelHandler);
     },
     fail: (err) => {
       console.error("Accelerometer start failed:", err);
@@ -35,10 +39,12 @@ const startAccelerometer = (callback) => {
  * Stop accelerometer listener
  */
 const stopAccelerometer = () => {
+  if (accelHandler) {
+    wx.offAccelerometerChange(accelHandler);
+    accelHandler = null;
+  }
   accelerometerCallback = null;
-  wx.stopAccelerometer({
-    fail: () => {},
-  });
+  wx.stopAccelerometer({ fail: () => {} });
 };
 
 /**
@@ -46,15 +52,17 @@ const stopAccelerometer = () => {
  * @param {Function} callback - receives { x, y, z }
  */
 const startGyroscope = (callback) => {
+  stopGyroscope();
   gyroscopeCallback = callback;
+  gyroHandler = (res) => {
+    if (gyroscopeCallback) {
+      gyroscopeCallback(res);
+    }
+  };
   wx.startGyroscope({
     interval: "game",
     success: () => {
-      wx.onGyroscopeChange((res) => {
-        if (gyroscopeCallback) {
-          gyroscopeCallback(res);
-        }
-      });
+      wx.onGyroscopeChange(gyroHandler);
     },
     fail: (err) => {
       console.error("Gyroscope start failed:", err);
@@ -66,10 +74,12 @@ const startGyroscope = (callback) => {
  * Stop gyroscope listener
  */
 const stopGyroscope = () => {
+  if (gyroHandler) {
+    wx.offGyroscopeChange(gyroHandler);
+    gyroHandler = null;
+  }
   gyroscopeCallback = null;
-  wx.stopGyroscope({
-    fail: () => {},
-  });
+  wx.stopGyroscope({ fail: () => {} });
 };
 
 /**
@@ -99,14 +109,14 @@ const _checkShake = (data) => {
 const detectShake = (callback, threshold = 15) => {
   shakeCallback = callback;
   shakeThreshold = threshold;
-  if (!accelerometerCallback) {
+  if (!accelHandler) {
     startAccelerometer(() => {});
   }
 };
 
 /**
  * Detect phone tilt
- * @param {Function} callback - called with tilt info { axis, value, direction }
+ * @param {Function} callback - called when tilt exceeds threshold
  * @param {'x'|'y'} [axis='x'] - which axis to monitor
  * @param {number} [threshold=30] - tilt angle threshold
  */
@@ -121,14 +131,20 @@ const detectTilt = (callback, axis = "x", threshold = 30) => {
 };
 
 /**
- * Detect phone flip (screen facing down)
+ * Detect phone flip (screen facing down) using accelerometer z-axis
  * @param {Function} callback - called when flip detected
  */
 const detectFlip = (callback) => {
-  startGyroscope((data) => {
-    // z-axis rotation indicates flip
-    if (Math.abs(data.z) > 1.5) {
+  let flipTriggered = false;
+  startAccelerometer((data) => {
+    // z < -0.8 means screen is facing down
+    if (data.z < -0.8 && !flipTriggered) {
+      flipTriggered = true;
       callback();
+    }
+    // Reset when phone is upright again
+    if (data.z > 0) {
+      flipTriggered = false;
     }
   });
 };

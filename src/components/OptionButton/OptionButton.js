@@ -20,6 +20,14 @@ Component({
     letters: ["A", "B", "C", "D", "E", "F"],
   },
 
+  observers: {
+    disabled(val) {
+      if (!val && this.data.showResult) {
+        this.setData({ selectedIndex: -1, showResult: false });
+      }
+    },
+  },
+
   methods: {
     /**
      * Handle option tap

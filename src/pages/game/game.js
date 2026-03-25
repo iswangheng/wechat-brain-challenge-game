@@ -108,8 +108,8 @@ Page({
         () => {
           if (!this.data.answered) this._onCorrect();
         },
-        level.interaction.threshold ? "x" : "x",
-        30,
+        level.interaction.axis || "x",
+        level.interaction.threshold || 30,
       );
     }
 
