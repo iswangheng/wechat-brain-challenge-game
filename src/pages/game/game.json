@@ -1,0 +1,8 @@
+{
+  "navigationBarTitleText": "挑战中",
+  "usingComponents": {
+    "question-card": "/components/QuestionCard/QuestionCard",
+    "option-button": "/components/OptionButton/OptionButton",
+    "share-card": "/components/ShareCard/ShareCard"
+  }
+}

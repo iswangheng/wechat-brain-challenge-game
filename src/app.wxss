@@ -1,0 +1,112 @@
+page {
+  --primary: #FFD700;
+  --primary-dark: #E6C200;
+  --blue: #4A90D9;
+  --red: #FF4757;
+  --green: #2ED573;
+  --bg: #F5F5F5;
+  --text: #333;
+  --text-light: #666;
+  --white: #FFFFFF;
+  --shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
+  --radius: 24rpx;
+  --radius-sm: 16rpx;
+
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  font-size: 28rpx;
+  line-height: 1.5;
+  box-sizing: border-box;
+}
+
+/* Buttons */
+.btn-primary {
+  background-color: var(--primary);
+  color: var(--text);
+  border: none;
+  border-radius: var(--radius);
+  padding: 24rpx 48rpx;
+  font-size: 32rpx;
+  font-weight: bold;
+  text-align: center;
+  box-shadow: 0 4rpx 12rpx rgba(255, 215, 0, 0.3);
+  transition: transform 0.1s ease;
+}
+
+.btn-primary:active {
+  transform: scale(0.96);
+}
+
+.btn-secondary {
+  background-color: var(--white);
+  color: var(--text);
+  border: 2rpx solid #DDD;
+  border-radius: var(--radius);
+  padding: 24rpx 48rpx;
+  font-size: 32rpx;
+  text-align: center;
+  transition: transform 0.1s ease;
+}
+
+.btn-secondary:active {
+  transform: scale(0.96);
+}
+
+/* Flex helpers */
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100rpx); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes bounceIn {
+  0% { transform: scale(0.3); opacity: 0; }
+  50% { transform: scale(1.05); }
+  70% { transform: scale(0.9); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-10rpx); }
+  20%, 40%, 60%, 80% { transform: translateX(10rpx); }
+}
+
+.anim-fade-in {
+  animation: fadeIn 0.3s ease forwards;
+}
+
+.anim-slide-up {
+  animation: slideUp 0.4s ease forwards;
+}
+
+.anim-bounce-in {
+  animation: bounceIn 0.5s ease forwards;
+}
+
+.anim-shake {
+  animation: shake 0.5s ease forwards;
+}

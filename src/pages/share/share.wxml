@@ -1,0 +1,29 @@
+<view class="share-container">
+  <!-- Challenge header -->
+  <view class="challenge-header">
+    <text class="challenge-emoji">🧠</text>
+    <text class="challenge-title">你能过几关</text>
+  </view>
+
+  <!-- Challenge info -->
+  <view class="challenge-card">
+    <text class="challenge-level">第 {{levelId}} 关</text>
+    <text class="challenge-text">{{challengeText}}</text>
+
+    <!-- Level preview -->
+    <view wx:if="{{level}}" class="level-preview">
+      <text class="preview-question">{{level.question}}</text>
+    </view>
+  </view>
+
+  <!-- Action buttons -->
+  <view class="challenge-actions">
+    <view class="btn-primary btn-challenge" bindtap="onStartChallenge">
+      接受挑战！
+    </view>
+
+    <view class="btn-home-link" bindtap="onGoHome">
+      从第1关开始
+    </view>
+  </view>
+</view>

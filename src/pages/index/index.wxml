@@ -1,0 +1,51 @@
+<view class="page-container">
+  <!-- Header area -->
+  <view class="header">
+    <view class="logo-area">
+      <text class="logo-emoji">🧠</text>
+      <text class="logo-title">你能过几关</text>
+    </view>
+    <text class="logo-subtitle">脑洞大挑战</text>
+  </view>
+
+  <!-- Progress display -->
+  <view wx:if="{{hasProgress}}" class="progress-section">
+    <view class="progress-bar-bg">
+      <view class="progress-bar-fill" style="width: {{progress.percentage}}%"></view>
+    </view>
+    <text class="progress-text">已过 {{progress.current}} / {{progress.total}} 关</text>
+  </view>
+
+  <!-- Main buttons -->
+  <view class="btn-area">
+    <view wx:if="{{hasProgress}}" class="btn-primary btn-large" bindtap="onContinueGame">
+      <text>继续挑战</text>
+      <text class="btn-sub">第 {{progress.current + 1}} 关</text>
+    </view>
+
+    <view class="{{hasProgress ? 'btn-secondary' : 'btn-primary'}} btn-large" bindtap="onStartGame">
+      <text>{{hasProgress ? '从头开始' : '开始挑战'}}</text>
+    </view>
+  </view>
+
+  <!-- Bottom actions -->
+  <view class="bottom-actions">
+    <view class="action-item" bindtap="onShowLeaderboard">
+      <text class="action-icon">🏆</text>
+      <text class="action-text">排行榜</text>
+    </view>
+
+    <view class="action-item" bindtap="onToggleSound">
+      <text class="action-icon">{{soundEnabled ? '🔊' : '🔇'}}</text>
+      <text class="action-text">{{soundEnabled ? '音效开' : '音效关'}}</text>
+    </view>
+
+    <button class="action-item share-btn" open-type="share">
+      <text class="action-icon">📤</text>
+      <text class="action-text">分享</text>
+    </button>
+  </view>
+
+  <!-- Leaderboard modal -->
+  <leaderboard visible="{{showLeaderboard}}" bindclose="onCloseLeaderboard" />
+</view>

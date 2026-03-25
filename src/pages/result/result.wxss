@@ -1,0 +1,125 @@
+.result-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 64rpx 48rpx;
+  background: linear-gradient(180deg, #FFD700 0%, #FFF8DC 30%, #F5F5F5 100%);
+}
+
+.result-header {
+  text-align: center;
+  margin-bottom: 48rpx;
+}
+
+.result-emoji {
+  display: block;
+  font-size: 120rpx;
+  margin-bottom: 16rpx;
+}
+
+.result-title {
+  font-size: 44rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+/* Score */
+.score-area {
+  text-align: center;
+  margin-bottom: 32rpx;
+}
+
+.score-circle {
+  width: 240rpx;
+  height: 240rpx;
+  border-radius: 50%;
+  background: #FFF;
+  box-shadow: 0 8rpx 32rpx rgba(255, 215, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24rpx;
+}
+
+.score-number {
+  font-size: 72rpx;
+  font-weight: bold;
+  color: var(--primary, #FFD700);
+}
+
+.score-label {
+  font-size: 28rpx;
+  color: #999;
+}
+
+.score-text {
+  font-size: 26rpx;
+  color: #666;
+}
+
+/* Progress */
+.result-progress {
+  width: 100%;
+  margin-bottom: 32rpx;
+}
+
+.result-progress-bg {
+  height: 16rpx;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 8rpx;
+  overflow: hidden;
+}
+
+.result-progress-fill {
+  height: 100%;
+  background: var(--green, #2ED573);
+  border-radius: 8rpx;
+  transition: width 1s ease;
+}
+
+/* Comment */
+.comment-area {
+  margin-bottom: 48rpx;
+}
+
+.comment-text {
+  font-size: 32rpx;
+  color: #333;
+  font-weight: 500;
+}
+
+/* Actions */
+.action-area {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+  margin-bottom: 48rpx;
+}
+
+.btn-action {
+  width: 100%;
+  padding: 28rpx 0;
+  text-align: center;
+  font-size: 32rpx;
+  border-radius: 48rpx;
+}
+
+.btn-action::after {
+  border: none;
+}
+
+.btn-home {
+  text-align: center;
+  font-size: 28rpx;
+  color: #999;
+  padding: 16rpx 0;
+}
+
+/* Ad */
+.ad-area {
+  width: 100%;
+  margin-top: auto;
+}
