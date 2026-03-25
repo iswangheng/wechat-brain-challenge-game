@@ -100,6 +100,9 @@
     <text class="explanation-text">{{explanation}}</text>
   </view>
 
+  <!-- Hidden canvas for share image generation -->
+  <canvas type="2d" id="shareCanvas" class="share-canvas"></canvas>
+
   <!-- Share card modal -->
   <share-card
     visible="{{showShareCard}}"

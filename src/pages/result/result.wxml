@@ -43,6 +43,9 @@
     </view>
   </view>
 
+  <!-- Hidden canvas for share image generation -->
+  <canvas type="2d" id="shareCanvas" class="share-canvas"></canvas>
+
   <!-- Banner ad -->
   <view class="ad-area">
     <ad-banner show="{{true}}" />

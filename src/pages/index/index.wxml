@@ -46,6 +46,9 @@
     </button>
   </view>
 
+  <!-- Hidden canvas for share image generation -->
+  <canvas type="2d" id="shareCanvas" class="share-canvas"></canvas>
+
   <!-- Leaderboard modal -->
   <leaderboard visible="{{showLeaderboard}}" bindclose="onCloseLeaderboard" />
 </view>

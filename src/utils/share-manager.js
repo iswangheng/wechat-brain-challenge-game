@@ -3,12 +3,6 @@
  */
 const shareTexts = require("../data/share-texts.json");
 
-const SHARE_IMAGES = [
-  "/images/share/card-bg-1.png",
-  "/images/share/card-bg-2.png",
-  "/images/share/card-bg-3.png",
-];
-
 /**
  * Get random item from array
  * @param {Array} arr
@@ -38,7 +32,6 @@ const getShareConfig = (type, levelData) => {
   return {
     title,
     path: `/pages/share/share?level=${levelId}&type=${type}`,
-    imageUrl: _randomItem(SHARE_IMAGES),
   };
 };
 
@@ -69,7 +62,7 @@ const getLevelShareText = (levelData) => {
  * Get random share card background image
  * @returns {string}
  */
-const getRandomShareImage = () => _randomItem(SHARE_IMAGES);
+const getRandomShareImage = () => "";
 
 /**
  * Configure page share menu

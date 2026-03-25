@@ -1,5 +1,6 @@
 const levelManager = require("../../utils/level-manager");
 const shareManager = require("../../utils/share-manager");
+const shareImage = require("../../utils/share-image");
 const audioManager = require("../../utils/audio-manager");
 
 Page({
@@ -37,6 +38,8 @@ Page({
     });
 
     shareManager.enableShareMenu();
+
+    this._generateShareImage(progress.current, progress.percentage);
   },
 
   /**
@@ -56,8 +59,34 @@ Page({
   },
 
   onShareAppMessage() {
-    return shareManager.getShareConfig("milestone", {
+    const config = shareManager.getShareConfig("milestone", {
       id: this.data.completed,
     });
+    if (this._shareImagePath) {
+      config.imageUrl = this._shareImagePath;
+    }
+    return config;
+  },
+
+  /**
+   * Generate dynamic share image via Canvas
+   */
+  _generateShareImage(completed, percentage) {
+    shareImage
+      .getCanvas(this)
+      .then((canvas) =>
+        shareImage.generate(canvas, {
+          bigText: `${completed}`,
+          bigLabel: "关已通过",
+          bottomText: `超过${percentage}%的玩家!`,
+          themeIndex: completed >= 80 ? 2 : 0,
+        }),
+      )
+      .then((path) => {
+        this._shareImagePath = path;
+      })
+      .catch((err) => {
+        console.error("Generate share image failed:", err);
+      });
   },
 });

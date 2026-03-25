@@ -36,7 +36,6 @@ App({
     return {
       title: "你能过几关？来挑战你的脑洞！",
       path: "/pages/index/index",
-      imageUrl: "/images/share/card-bg-1.png",
     };
   },
 

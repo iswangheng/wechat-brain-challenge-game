@@ -118,6 +118,15 @@
   padding: 16rpx 0;
 }
 
+/* Hidden canvas for share image */
+.share-canvas {
+  position: fixed;
+  left: -9999px;
+  top: -9999px;
+  width: 250px;
+  height: 200px;
+}
+
 /* Ad */
 .ad-area {
   width: 100%;

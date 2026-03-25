@@ -1,6 +1,7 @@
 const levelManager = require("../../utils/level-manager");
 const adManager = require("../../utils/ad-manager");
 const shareManager = require("../../utils/share-manager");
+const shareImage = require("../../utils/share-image");
 const sensorManager = require("../../utils/sensor-manager");
 const audioManager = require("../../utils/audio-manager");
 const storage = require("../../utils/storage");
@@ -49,7 +50,11 @@ Page({
   onShareAppMessage() {
     const level = this.data.level;
     const type = this.data.isCorrect ? "levelComplete" : "wrongAnswer";
-    return shareManager.getShareConfig(type, level);
+    const config = shareManager.getShareConfig(type, level);
+    if (this._shareImagePath) {
+      config.imageUrl = this._shareImagePath;
+    }
+    return config;
   },
 
   /**
@@ -275,11 +280,7 @@ Page({
       showShareCard: true,
     });
 
-    // Check milestone
-    const completed = levelManager.getCompletedCount();
-    if (completed % 10 === 0) {
-      storage.updateStats({ totalShareCount: 0 });
-    }
+    this._generateShareImage(level.id, "你敢来挑战吗?", 0);
 
     // Show interstitial ad at intervals
     if (adManager.shouldShowInterstitial(level.id)) {
@@ -304,6 +305,8 @@ Page({
       explanation: level.explanation || "",
       showShareCard: true,
     });
+
+    this._generateShareImage(level.id, "这题你能过吗?", 1);
   },
 
   /**
@@ -391,5 +394,27 @@ Page({
       clearInterval(this.data.colorInterval);
       this.setData({ colorInterval: null });
     }
+  },
+
+  /**
+   * Generate dynamic share image via Canvas
+   */
+  _generateShareImage(levelId, bottomText, themeIndex) {
+    shareImage
+      .getCanvas(this)
+      .then((canvas) =>
+        shareImage.generate(canvas, {
+          bigText: `${levelId}`,
+          bigLabel: "关",
+          bottomText,
+          themeIndex,
+        }),
+      )
+      .then((path) => {
+        this._shareImagePath = path;
+      })
+      .catch((err) => {
+        console.error("Generate share image failed:", err);
+      });
   },
 });
