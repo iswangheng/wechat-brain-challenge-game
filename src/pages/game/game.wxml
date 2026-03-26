@@ -1,4 +1,31 @@
-<view class="game-container" wx:if="{{level}}">
+<!-- Level select mode -->
+<view wx:if="{{mode === 'select'}}" class="select-container">
+  <view class="select-header">
+    <view class="select-back" bindtap="onBack">← 返回</view>
+    <text class="select-title">选择关卡</text>
+  </view>
+  <scroll-view scroll-y class="select-scroll">
+    <view wx:for="{{sectionList}}" wx:key="title" class="select-section">
+      <text class="section-title">{{item.title}}</text>
+      <view class="level-grid">
+        <view
+          wx:for="{{item.levels}}"
+          wx:for-item="lv"
+          wx:key="id"
+          class="level-cell {{lv.completed ? 'completed' : (lv.unlocked ? 'unlocked' : 'locked')}}"
+          data-id="{{lv.id}}"
+          bindtap="onSelectLevel"
+        >
+          <text class="level-num">{{lv.id}}</text>
+          <text wx:if="{{lv.completed}}" class="level-mark">✓</text>
+          <text wx:elif="{{!lv.unlocked}}" class="level-mark">🔒</text>
+        </view>
+      </view>
+    </view>
+  </scroll-view>
+</view>
+
+<view class="game-container" wx:elif="{{level}}">
   <!-- Top bar: progress + hint -->
   <view class="top-bar">
     <view class="progress-info">

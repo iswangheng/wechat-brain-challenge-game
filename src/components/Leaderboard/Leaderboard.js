@@ -11,6 +11,7 @@ Component({
   data: {
     friends: [],
     myScore: 0,
+    useCanvas: false,
   },
 
   observers: {
@@ -24,8 +25,7 @@ Component({
   methods: {
     /**
      * Load leaderboard data
-     * Note: real implementation needs open-data-context
-     * Using mock data for development
+     * Try open data context first, fallback to mock data
      */
     _loadData() {
       const progress = storage.getProgress();
@@ -33,7 +33,19 @@ Component({
         ? progress.completedLevels.length
         : 0;
 
-      // Mock friend data for development
+      try {
+        const openDataContext = wx.getOpenDataContext();
+        openDataContext.postMessage({ type: "render" });
+        this.setData({ useCanvas: true, myScore });
+      } catch (_e) {
+        this._fallbackMock(myScore);
+      }
+    },
+
+    /**
+     * Fallback to mock data when open data context is unavailable
+     */
+    _fallbackMock(myScore) {
       const friends = [
         { nickname: "脑洞大王", avatar: "", score: 68 },
         { nickname: "智慧之光", avatar: "", score: 52 },
@@ -43,12 +55,12 @@ Component({
         { nickname: "新手玩家", avatar: "", score: 12 },
       ];
 
-      // Sort by score descending
       friends.sort((a, b) => b.score - a.score);
 
       this.setData({
         friends,
         myScore,
+        useCanvas: false,
       });
     },
 

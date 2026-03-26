@@ -26,6 +26,8 @@ Page({
     sequenceItems: [],
     // Mode
     mode: "play",
+    // Level select
+    sectionList: [],
   },
 
   onLoad(options) {
@@ -33,7 +35,29 @@ Page({
     adManager.init();
 
     if (options.mode === "select") {
-      this.setData({ mode: "select" });
+      const sections = levelManager.getLevelSections();
+      const completedSet = new Set(sections.completedLevels || []);
+      const maxLevel = sections.maxLevel || 1;
+
+      const sectionMap = [
+        { key: "beginner", title: "入门 (1-10)" },
+        { key: "intermediate", title: "进阶 (11-30)" },
+        { key: "advanced", title: "高手 (31-50)" },
+        { key: "expert", title: "专家 (51-70)" },
+        { key: "hell", title: "地狱 (71-80)" },
+      ];
+
+      const sectionList = sectionMap.map((s) => ({
+        title: s.title,
+        levels: sections[s.key].map((l) => ({
+          id: l.id,
+          unlocked: l.id <= maxLevel,
+          completed: completedSet.has(l.id),
+        })),
+      }));
+
+      this.setData({ mode: "select", sectionList });
+      wx.setNavigationBarTitle({ title: "选择关卡" });
       return;
     }
 
@@ -61,6 +85,23 @@ Page({
   onUnload() {
     sensorManager.stopAll();
     this._clearColorInterval();
+  },
+
+  /**
+   * Select a level from the grid
+   */
+  onSelectLevel(e) {
+    const id = parseInt(e.currentTarget.dataset.id, 10);
+    if (!id || !levelManager.isLevelUnlocked(id)) return;
+    audioManager.playClick();
+    wx.redirectTo({ url: `/pages/game/game?level=${id}` });
+  },
+
+  /**
+   * Go back from level select
+   */
+  onBack() {
+    wx.navigateBack();
   },
 
   onShareAppMessage() {
@@ -296,6 +337,16 @@ Page({
     const level = this.data.level;
     if (!level) return;
     levelManager.completeLevel(level.id);
+
+    // Upload score to cloud storage for leaderboard
+    try {
+      const completedCount = levelManager.getCompletedCount();
+      wx.setUserCloudStorage({
+        KVDataList: [{ key: "score", value: String(completedCount) }],
+      });
+    } catch (_e) {
+      // Silently skip if appid is empty or API unavailable
+    }
 
     this.setData({
       answered: true,

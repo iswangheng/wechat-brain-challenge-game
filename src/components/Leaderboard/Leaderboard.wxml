@@ -7,8 +7,13 @@
       <view class="lb-close" bindtap="onClose">✕</view>
     </view>
 
-    <!-- Friend list -->
-    <scroll-view scroll-y class="lb-list">
+    <!-- Canvas leaderboard (open data context) -->
+    <view wx:if="{{useCanvas}}" class="lb-canvas-wrap">
+      <canvas type="2d" id="openDataCanvas" style="width: 100%; height: 60vh;"></canvas>
+    </view>
+
+    <!-- Fallback friend list -->
+    <scroll-view wx:else scroll-y class="lb-list">
       <view
         wx:for="{{friends}}"
         wx:key="nickname"

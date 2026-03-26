@@ -15,7 +15,7 @@ let enabled = true;
 const _createAudio = (src) => {
   const audio = wx.createInnerAudioContext();
   audio.src = src;
-  audio.obeyMuteSwitch = false;
+  audio.obeyMuteSwitch = true;
   return audio;
 };
 
