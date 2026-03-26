@@ -38,7 +38,7 @@ const getCurrentLevel = () => {
  * @param {number} id
  */
 const completeLevel = (id) => {
-  storage.saveProgress(id);
+  storage.saveProgress(id, getLevelCount());
   storage.updateStats({ totalCorrect: 1, totalAttempts: 1 });
 };
 

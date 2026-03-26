@@ -156,6 +156,8 @@ const stopAll = () => {
   stopAccelerometer();
   stopGyroscope();
   shakeCallback = null;
+  shakeThreshold = 15;
+  lastShakeTime = 0;
 };
 
 module.exports = {

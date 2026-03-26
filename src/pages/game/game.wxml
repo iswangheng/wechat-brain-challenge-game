@@ -13,7 +13,7 @@
 
   <!-- Progress bar -->
   <view class="progress-bar-bg">
-    <view class="progress-bar-fill" style="width: {{(levelId / progress.total) * 100}}%"></view>
+    <view class="progress-bar-fill" style="width: {{(progress.current / progress.total) * 100}}%"></view>
   </view>
 
   <!-- Question card -->
@@ -88,6 +88,7 @@
     <input
       class="answer-input"
       placeholder="输入答案"
+      value="{{inputValue}}"
       confirm-type="done"
       bindinput="onInputAnswer"
       bindconfirm="onConfirmAnswer"

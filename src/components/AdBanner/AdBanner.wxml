@@ -1,4 +1,4 @@
-<view wx:if="{{show && !adError}}" class="ad-container">
+<view wx:if="{{show && !adError && !hidden}}" class="ad-container">
   <ad
     unit-id="{{adUnitId}}"
     ad-intervals="30"

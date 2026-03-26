@@ -28,7 +28,7 @@
       <text class="btn-sub">再来一遍？</text>
     </view>
 
-    <view class="{{hasProgress ? 'btn-secondary' : 'btn-primary'}} btn-large" bindtap="onStartGame">
+    <view wx:if="{{!(hasProgress && progress.current >= progress.total)}}" class="{{hasProgress ? 'btn-secondary' : 'btn-primary'}} btn-large" bindtap="onStartGame">
       <text>{{hasProgress ? '从头开始' : '开始挑战'}}</text>
     </view>
   </view>

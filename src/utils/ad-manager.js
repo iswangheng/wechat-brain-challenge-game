@@ -65,19 +65,23 @@ const _createInterstitial = () => {
  * @param {Function} callback - called with true if reward earned, false otherwise
  */
 const showRewardedVideo = (callback) => {
+  if (rewardedCallback) {
+    // A rewarded video is already in progress, reject this call
+    callback(false);
+    return;
+  }
   rewardedCallback = callback;
   if (!rewardedVideoAd) {
+    rewardedCallback = null;
     callback(false);
     return;
   }
   rewardedVideoAd.show().catch(() => {
     rewardedVideoAd
       .load()
-      .then(() => {
-        rewardedVideoAd.show();
-      })
+      .then(() => rewardedVideoAd.show())
       .catch(() => {
-        callback(false);
+        if (rewardedCallback) rewardedCallback(false);
         rewardedCallback = null;
       });
   });

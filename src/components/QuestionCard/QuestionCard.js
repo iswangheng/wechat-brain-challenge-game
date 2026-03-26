@@ -30,6 +30,8 @@ Component({
         zoomScale: 1,
         chars: [],
       });
+      // Reset completion flags
+      this._interactCompleted = false;
       if (val && val.type === "text_trap" && val.displayText) {
         this.setData({
           chars: val.displayText.split(""),
@@ -73,7 +75,8 @@ Component({
       if (level.interaction.method === "scratch") {
         const percent = this.data.scratchPercent + 0.5;
         this.setData({ scratchPercent: Math.min(percent, 100) });
-        if (percent >= 60) {
+        if (percent >= 60 && !this._interactCompleted) {
+          this._interactCompleted = true;
           this.triggerEvent("interactcomplete", { method: "scratch" });
         }
       }
@@ -94,19 +97,29 @@ Component({
         const dist = Math.sqrt(
           this.data.dragX * this.data.dragX + this.data.dragY * this.data.dragY,
         );
-        if (dist > 100) {
+        if (dist > 100 && !this._interactCompleted) {
+          this._interactCompleted = true;
           this.triggerEvent("interactcomplete", {
             method: level.interaction.method,
           });
         }
       }
 
-      if (level.interaction.method === "swipe") {
+      if (level.interaction.method === "swipe" && !this._interactCompleted) {
+        const direction =
+          (level.interaction && level.interaction.direction) || "up";
+        const dx = touch.clientX - this._lastX;
         const dy = this._lastY - touch.clientY;
-        if (dy > 80) {
+        let triggered = false;
+        if (direction === "up" && dy > 80) triggered = true;
+        if (direction === "down" && dy < -80) triggered = true;
+        if (direction === "left" && dx < -80) triggered = true;
+        if (direction === "right" && dx > 80) triggered = true;
+        if (triggered) {
+          this._interactCompleted = true;
           this.triggerEvent("interactcomplete", {
             method: "swipe",
-            direction: "up",
+            direction,
           });
         }
       }
@@ -151,7 +164,8 @@ Component({
 
       this.setData({ zoomScale: scale });
 
-      if (scale > 1.8) {
+      if (scale > 1.8 && !this._interactCompleted) {
+        this._interactCompleted = true;
         this.triggerEvent("interactcomplete", { method: "pinch_zoom" });
       }
     },
@@ -175,7 +189,8 @@ Component({
      * Handle multi-touch detection
      */
     onMultiTouch(e) {
-      if (e.touches.length >= 2) {
+      if (e.touches.length >= 2 && !this._interactCompleted) {
+        this._interactCompleted = true;
         this.triggerEvent("interactcomplete", {
           method: "multi_touch",
           touches: e.touches.length,

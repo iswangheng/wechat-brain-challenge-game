@@ -13,6 +13,9 @@ Page({
   },
 
   onLoad() {
+    // Ensure levels are loaded (handles cold-start into result page)
+    levelManager.loadLevels();
+
     const progress = levelManager.getProgress();
     const isAllDone = levelManager.isAllCompleted();
 
@@ -38,8 +41,11 @@ Page({
     });
 
     shareManager.enableShareMenu();
+  },
 
-    this._generateShareImage(progress.current, progress.percentage);
+  onReady() {
+    // Generate share image after DOM is ready so canvas node exists
+    this._generateShareImage(this.data.completed, this.data.percentage);
   },
 
   /**

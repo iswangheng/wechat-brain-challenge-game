@@ -10,6 +10,7 @@ Page({
     hasProgress: false,
     showLeaderboard: false,
     soundEnabled: true,
+    currentLevel: 1,
   },
 
   onLoad() {
@@ -20,13 +21,23 @@ Page({
   onShow() {
     const progress = levelManager.getProgress();
     const settings = storage.getSettings();
+    const rawProgress = storage.getProgress();
     this.setData({
       progress,
       hasProgress: progress.current > 0,
       soundEnabled: settings.soundEnabled,
+      currentLevel: rawProgress.currentLevel,
     });
 
-    this._generateShareImage(progress.current);
+    // Regenerate share image on subsequent onShow calls (canvas is ready after first onReady)
+    if (this._canvasReady) {
+      this._generateShareImage(progress.current);
+    }
+  },
+
+  onReady() {
+    this._canvasReady = true;
+    this._generateShareImage(this.data.progress.current);
   },
 
   /**
@@ -42,8 +53,8 @@ Page({
    */
   onContinueGame() {
     audioManager.playClick();
-    const progress = storage.getProgress();
-    wx.navigateTo({ url: `/pages/game/game?level=${progress.currentLevel}` });
+    const levelId = this.data.currentLevel || 1;
+    wx.navigateTo({ url: `/pages/game/game?level=${levelId}` });
   },
 
   /**

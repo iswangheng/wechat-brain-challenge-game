@@ -19,7 +19,6 @@ Page({
     progress: { current: 0, total: 80, percentage: 0 },
     // For interactive: color_wait
     colorBtnColor: "#FF4757",
-    colorInterval: null,
     // For interactive: lights_puzzle
     lights: [],
     // For interactive: sequence_tap
@@ -42,6 +41,23 @@ Page({
     this._loadLevel(levelId);
   },
 
+  onHide() {
+    sensorManager.stopAll();
+    this._clearColorInterval();
+  },
+
+  onShow() {
+    // Re-setup interactive sensors only when returning from hide (not first load)
+    if (!this._hasShown) {
+      this._hasShown = true;
+      return;
+    }
+    const level = this.data.level;
+    if (level && level.type === "interactive" && !this.data.answered) {
+      this._setupInteractive(level);
+    }
+  },
+
   onUnload() {
     sensorManager.stopAll();
     this._clearColorInterval();
@@ -61,15 +77,23 @@ Page({
    * Load a specific level
    */
   _loadLevel(id) {
+    // Clean up previous level's sensors and timers
+    sensorManager.stopAll();
+    this._clearColorInterval();
+
     const level = levelManager.getLevel(id);
     if (!level) {
       wx.redirectTo({ url: "/pages/result/result" });
       return;
     }
 
+    // Reset input value for input_answer levels
+    this._inputValue = "";
+
     this.setData({
       level,
       levelId: id,
+      inputValue: "",
       answered: false,
       isCorrect: false,
       showHint: false,
@@ -189,14 +213,8 @@ Page({
   /**
    * Handle touch action for interactive
    */
-  onTouchAction(e) {
-    const level = this.data.level;
-    if (!level || !level.interaction) return;
-
-    // Multi-touch detection
-    if (level.interaction.method === "multi_touch" && e.detail.touches >= 2) {
-      if (!this.data.answered) this._onCorrect();
-    }
+  onTouchAction() {
+    // Touch events from QuestionCard (used for tracking, not for answer logic)
   },
 
   /**
@@ -331,6 +349,9 @@ Page({
       // Auto advance to next level
       this._loadLevel(this.data.levelId + 1);
     } else {
+      // Clean up before retry
+      sensorManager.stopAll();
+      this._clearColorInterval();
       // Reset for retry
       this.setData({
         answered: false,
@@ -348,6 +369,7 @@ Page({
    */
   onInputAnswer(e) {
     this._inputValue = e.detail.value;
+    this.setData({ inputValue: e.detail.value });
   },
 
   /**
@@ -377,19 +399,19 @@ Page({
    * Color cycle for color_wait interactive
    */
   _startColorCycle() {
+    this._clearColorInterval();
     const colors = ["#FF4757", "#2ED573", "#FFD700", "#4A90D9", "#FF6B81"];
     let index = 0;
-    const interval = setInterval(() => {
+    this._colorTimer = setInterval(() => {
       index = (index + 1) % colors.length;
       this.setData({ colorBtnColor: colors[index] });
     }, 800);
-    this.setData({ colorInterval: interval });
   },
 
   _clearColorInterval() {
-    if (this.data.colorInterval) {
-      clearInterval(this.data.colorInterval);
-      this.setData({ colorInterval: null });
+    if (this._colorTimer) {
+      clearInterval(this._colorTimer);
+      this._colorTimer = null;
     }
   },
 

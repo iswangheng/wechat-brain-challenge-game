@@ -13,6 +13,14 @@ Component({
   data: {
     adLoaded: false,
     adError: false,
+    hidden: false,
+  },
+
+  observers: {
+    show() {
+      // Reset hidden state when parent changes show prop
+      this.setData({ hidden: false });
+    },
   },
 
   methods: {
@@ -35,7 +43,7 @@ Component({
      * Handle ad close
      */
     onAdClose() {
-      this.setData({ show: false });
+      this.setData({ hidden: true });
     },
   },
 });

@@ -80,15 +80,16 @@ const getProgress = () => {
  * Save level completion
  * @param {number} levelId
  */
-const saveProgress = (levelId) => {
+const saveProgress = (levelId, totalLevels = 80) => {
   const progress = getProgress();
   if (!progress.completedLevels.includes(levelId)) {
     progress.completedLevels.push(levelId);
   }
+  const nextLevel = Math.min(levelId + 1, totalLevels);
   if (levelId >= progress.maxLevel) {
-    progress.maxLevel = levelId + 1;
+    progress.maxLevel = nextLevel;
   }
-  progress.currentLevel = levelId + 1;
+  progress.currentLevel = nextLevel;
   set(KEYS.PROGRESS, progress);
 };
 

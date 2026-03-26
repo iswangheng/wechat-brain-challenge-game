@@ -28,9 +28,8 @@ Component({
   },
 
   observers: {
-    "visible, isCorrect"(visible) {
+    "visible, isCorrect"(visible, isCorrect) {
       if (!visible) return;
-      const isCorrect = this.properties.isCorrect;
       this.setData({
         emoji: isCorrect ? "🎉" : "😂",
         actionText: isCorrect ? "继续挑战" : "再试一次",
