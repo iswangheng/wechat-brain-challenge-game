@@ -73,7 +73,11 @@ const remove = (key) => {
  */
 const getProgress = () => {
   const progress = get(KEYS.PROGRESS);
-  return progress || { ...DEFAULT_PROGRESS };
+  const merged = { ...DEFAULT_PROGRESS, ...(progress || {}) };
+  // Ensure array fields are valid
+  if (!Array.isArray(merged.completedLevels)) merged.completedLevels = [];
+  if (!Array.isArray(merged.hintUsed)) merged.hintUsed = [];
+  return merged;
 };
 
 /**

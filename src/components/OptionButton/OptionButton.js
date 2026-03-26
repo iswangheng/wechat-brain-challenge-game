@@ -23,6 +23,7 @@ Component({
   observers: {
     disabled(val) {
       if (!val && this.data.showResult) {
+        this._tapping = false;
         this.setData({ selectedIndex: -1, showResult: false });
       }
     },
@@ -33,7 +34,8 @@ Component({
      * Handle option tap
      */
     onOptionTap(e) {
-      if (this.data.disabled || this.data.showResult) return;
+      if (this._tapping || this.data.disabled || this.data.showResult) return;
+      this._tapping = true;
 
       const index = parseInt(e.currentTarget.dataset.index, 10);
       const correct = index === this.properties.correctIndex;

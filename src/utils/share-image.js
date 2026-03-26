@@ -29,17 +29,21 @@ const _roundRect = (ctx, x, y, w, h, r) => {
  */
 const getCanvas = (pageInstance) => {
   return new Promise((resolve, reject) => {
-    const query = pageInstance.createSelectorQuery();
-    query
-      .select("#shareCanvas")
-      .fields({ node: true, size: true })
-      .exec((res) => {
-        if (res[0] && res[0].node) {
-          resolve(res[0].node);
-        } else {
-          reject(new Error("Canvas node not found"));
-        }
-      });
+    try {
+      const query = pageInstance.createSelectorQuery();
+      query
+        .select("#shareCanvas")
+        .fields({ node: true, size: true })
+        .exec((res) => {
+          if (res && res[0] && res[0].node) {
+            resolve(res[0].node);
+          } else {
+            reject(new Error("Canvas node not found"));
+          }
+        });
+    } catch (err) {
+      reject(err);
+    }
   });
 };
 

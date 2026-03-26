@@ -64,7 +64,9 @@ const getLevelCount = () => {
  */
 const getCompletedCount = () => {
   const progress = storage.getProgress();
-  return progress.completedLevels.length;
+  return Array.isArray(progress.completedLevels)
+    ? progress.completedLevels.length
+    : 0;
 };
 
 /**

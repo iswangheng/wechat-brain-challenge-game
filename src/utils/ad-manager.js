@@ -20,6 +20,7 @@ let rewardedCallback = null;
  * Initialize ad instances
  */
 const init = () => {
+  if (rewardedVideoAd || interstitialAd) return;
   _createRewardedVideo();
   _createInterstitial();
 };

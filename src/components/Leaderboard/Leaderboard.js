@@ -29,7 +29,9 @@ Component({
      */
     _loadData() {
       const progress = storage.getProgress();
-      const myScore = progress.completedLevels.length;
+      const myScore = Array.isArray(progress.completedLevels)
+        ? progress.completedLevels.length
+        : 0;
 
       // Mock friend data for development
       const friends = [

@@ -87,8 +87,9 @@ Page({
       return;
     }
 
-    // Reset input value for input_answer levels
+    // Reset sync locks and input value
     this._inputValue = "";
+    this._answerLocked = false;
 
     this.setData({
       level,
@@ -116,6 +117,7 @@ Page({
    * Setup interactive level mechanics
    */
   _setupInteractive(level) {
+    if (!level || !level.interaction) return;
     const method = level.interaction.method;
 
     if (method === "shake") {
@@ -183,6 +185,7 @@ Page({
     if (this.data.answered) return;
     const { index } = e.detail;
     const level = this.data.level;
+    if (!level || !level.interaction) return;
 
     if (index === level.interaction.correctIndex) {
       this._onCorrect();
@@ -205,6 +208,7 @@ Page({
   onTextTap(e) {
     if (this.data.answered) return;
     const level = this.data.level;
+    if (!level || !level.interaction || !e.detail) return;
     if (e.detail.target === level.interaction.targetText) {
       this._onCorrect();
     }
@@ -235,6 +239,8 @@ Page({
   onLightTap(e) {
     if (this.data.answered) return;
     const index = parseInt(e.currentTarget.dataset.index, 10);
+    if (isNaN(index) || index < 0) return;
+    if (!this.data.level || !this.data.level.interaction) return;
     const lights = [...this.data.lights];
     const size = this.data.level.interaction.gridSize || 3;
 
@@ -263,6 +269,7 @@ Page({
   onSequenceTap(e) {
     if (this.data.answered) return;
     const step = parseInt(e.currentTarget.dataset.step, 10);
+    if (isNaN(step)) return;
 
     if (step === this.data.sequenceStep) {
       const nextStep = this.data.sequenceStep + 1;
@@ -280,11 +287,14 @@ Page({
    * Handle correct answer
    */
   _onCorrect() {
+    if (this._answerLocked) return;
+    this._answerLocked = true;
     sensorManager.stopAll();
     this._clearColorInterval();
     audioManager.playCorrect();
 
     const level = this.data.level;
+    if (!level) return;
     levelManager.completeLevel(level.id);
 
     this.setData({
@@ -309,10 +319,13 @@ Page({
    * Handle wrong answer
    */
   _onWrong() {
+    if (this._answerLocked) return;
+    this._answerLocked = true;
     audioManager.playWrong();
     levelManager.recordWrongAnswer();
 
     const level = this.data.level;
+    if (!level) return;
     this.setData({
       answered: true,
       isCorrect: false,
@@ -343,6 +356,7 @@ Page({
    * Close share card and proceed
    */
   onCloseShareCard() {
+    if (!this.data.showShareCard) return;
     this.setData({ showShareCard: false });
 
     if (this.data.isCorrect) {
@@ -353,12 +367,13 @@ Page({
       sensorManager.stopAll();
       this._clearColorInterval();
       // Reset for retry
+      this._answerLocked = false;
       this.setData({
         answered: false,
         isCorrect: false,
       });
       // Re-setup interactive if needed
-      if (this.data.level.type === "interactive") {
+      if (this.data.level && this.data.level.type === "interactive") {
         this._setupInteractive(this.data.level);
       }
     }
@@ -378,9 +393,10 @@ Page({
   onConfirmAnswer() {
     if (this.data.answered) return;
     const level = this.data.level;
+    if (!level || !level.interaction) return;
     const correct =
       this._inputValue &&
-      this._inputValue.trim() === level.interaction.correctAnswer;
+      this._inputValue.trim() === String(level.interaction.correctAnswer);
     if (correct) {
       this._onCorrect();
     } else {

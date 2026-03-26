@@ -8,7 +8,8 @@ const shareTexts = require("../data/share-texts.json");
  * @param {Array} arr
  * @returns {*}
  */
-const _randomItem = (arr) => arr[Math.floor(Math.random() * arr.length)];
+const _randomItem = (arr) =>
+  arr && arr.length > 0 ? arr[Math.floor(Math.random() * arr.length)] : "";
 
 /**
  * Replace {level} placeholder in text
@@ -16,7 +17,8 @@ const _randomItem = (arr) => arr[Math.floor(Math.random() * arr.length)];
  * @param {number} level
  * @returns {string}
  */
-const _fillTemplate = (text, level) => text.replace(/{level}/g, level);
+const _fillTemplate = (text, level) =>
+  text ? text.replace(/{level}/g, level) : "";
 
 /**
  * Get share configuration for wx.shareAppMessage
@@ -65,6 +67,7 @@ const enableShareMenu = () => {
   wx.showShareMenu({
     withShareTicket: true,
     menus: ["shareAppMessage", "shareTimeline"],
+    fail: () => {},
   });
 };
 

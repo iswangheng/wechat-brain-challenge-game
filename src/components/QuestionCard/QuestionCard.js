@@ -53,6 +53,7 @@ Component({
      * Handle touch start for scratch/drag interactions
      */
     onTouchStart(e) {
+      if (!e.touches || e.touches.length === 0) return;
       const touch = e.touches[0];
       this._lastX = touch.clientX;
       this._lastY = touch.clientY;
@@ -68,7 +69,9 @@ Component({
      * Handle touch move for scratch/drag interactions
      */
     onTouchMove(e) {
+      if (!e.touches || e.touches.length === 0) return;
       const touch = e.touches[0];
+      if (this._lastX === undefined) return;
       const level = this.properties.level;
       if (!level || !level.interaction) return;
 
