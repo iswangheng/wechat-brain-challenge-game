@@ -164,6 +164,11 @@
   text-align: center;
 }
 
+.btn-confirm {
+  margin-top: 24rpx;
+  text-align: center;
+}
+
 /* Explanation */
 .explanation-box {
   margin: 24rpx;

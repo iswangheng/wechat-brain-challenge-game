@@ -59,12 +59,6 @@ const getLevelShareText = (levelData) => {
 };
 
 /**
- * Get random share card background image
- * @returns {string}
- */
-const getRandomShareImage = () => "";
-
-/**
  * Configure page share menu
  */
 const enableShareMenu = () => {
@@ -78,6 +72,5 @@ module.exports = {
   getShareConfig,
   getShareText,
   getLevelShareText,
-  getRandomShareImage,
   enableShareMenu,
 };

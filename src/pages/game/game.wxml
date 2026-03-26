@@ -92,6 +92,7 @@
       bindinput="onInputAnswer"
       bindconfirm="onConfirmAnswer"
     />
+    <view class="btn-primary btn-confirm" bindtap="onConfirmAnswer">确认</view>
   </view>
 
   <!-- Explanation (shown after answer) -->

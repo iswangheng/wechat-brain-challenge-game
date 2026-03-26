@@ -63,10 +63,7 @@ Page({
   _loadLevel(id) {
     const level = levelManager.getLevel(id);
     if (!level) {
-      wx.showToast({ title: "恭喜通关！", icon: "success" });
-      setTimeout(() => {
-        wx.navigateBack();
-      }, 1500);
+      wx.redirectTo({ url: "/pages/result/result" });
       return;
     }
 

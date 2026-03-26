@@ -18,9 +18,14 @@
 
   <!-- Main buttons -->
   <view class="btn-area">
-    <view wx:if="{{hasProgress}}" class="btn-primary btn-large" bindtap="onContinueGame">
+    <view wx:if="{{hasProgress && progress.current < progress.total}}" class="btn-primary btn-large" bindtap="onContinueGame">
       <text>继续挑战</text>
       <text class="btn-sub">第 {{progress.current + 1}} 关</text>
+    </view>
+
+    <view wx:if="{{hasProgress && progress.current >= progress.total}}" class="btn-primary btn-large" bindtap="onStartGame">
+      <text>🎉 已全部通关</text>
+      <text class="btn-sub">再来一遍？</text>
     </view>
 
     <view class="{{hasProgress ? 'btn-secondary' : 'btn-primary'}} btn-large" bindtap="onStartGame">
