@@ -242,8 +242,9 @@ class GameScene {
    * Compute vertical layout positions
    */
   _computeLayout() {
-    this._questionCardY = Math.floor(this.height * 0.13);
-    this._interactionY = Math.floor(this.height * 0.35);
+    this._questionCardY = Math.floor(this.height * 0.12);
+    // Will be recalculated dynamically in _renderQuestionCard based on actual card height
+    this._interactionY = Math.floor(this.height * 0.28);
   }
 
   // ---------------------------------------------------------------------------
@@ -795,6 +796,9 @@ class GameScene {
       maxWidth: textMaxW,
       lineHeight: 1.5,
     });
+
+    // Dynamically set interaction area right below the question card
+    this._interactionY = cardY + cardH + 10;
   }
 
   /**
@@ -985,7 +989,7 @@ class GameScene {
 
     drawText(ctx, texts[method] || level.hint || "操作你的手机", width / 2, y + 50, {
       fontSize: 16,
-      color: "rgba(255,255,255,0.7)",
+      color: "rgba(255,255,255,0.9)",
       align: "center",
     });
   }
@@ -1000,7 +1004,7 @@ class GameScene {
 
     drawText(ctx, "颜色变蓝时点击", width / 2, this._interactionY + 20, {
       fontSize: 15,
-      color: "rgba(255,255,255,0.7)",
+      color: "rgba(255,255,255,0.9)",
       align: "center",
     });
 
@@ -1031,7 +1035,7 @@ class GameScene {
 
     drawText(ctx, "点击灯泡，关掉所有灯", this.width / 2, this._interactionY + 10, {
       fontSize: 14,
-      color: "rgba(255,255,255,0.7)",
+      color: "rgba(255,255,255,0.9)",
       align: "center",
     });
 
@@ -1067,7 +1071,7 @@ class GameScene {
 
     drawText(ctx, `按正确顺序点击 (${this._sequenceIndex}/${(this.level.interaction.steps || []).length})`, this.width / 2, this._interactionY + 10, {
       fontSize: 14,
-      color: "rgba(255,255,255,0.7)",
+      color: "rgba(255,255,255,0.9)",
       align: "center",
     });
 
@@ -1096,7 +1100,7 @@ class GameScene {
     drawCard(ctx, areaX, areaY, areaW, areaH);
     drawText(ctx, "✨ 刮开看答案 ✨", width / 2, areaY + areaH / 2, {
       fontSize: 16,
-      color: "rgba(255,255,255,0.7)",
+      color: "rgba(255,255,255,0.9)",
       align: "center",
     });
 
@@ -1136,7 +1140,7 @@ class GameScene {
 
     drawText(ctx, "👆 拖动下方元素", width / 2, this._interactionY + 20, {
       fontSize: 14,
-      color: "rgba(255,255,255,0.7)",
+      color: "rgba(255,255,255,0.9)",
       align: "center",
     });
 
@@ -1177,7 +1181,7 @@ class GameScene {
 
     drawText(ctx, `向${this._directionLabel(direction)}滑动`, width / 2, this._interactionY + 110, {
       fontSize: 16,
-      color: "rgba(255,255,255,0.7)",
+      color: "rgba(255,255,255,0.9)",
       align: "center",
     });
   }
@@ -1256,7 +1260,7 @@ class GameScene {
 
     drawText(ctx, "双指放大", width / 2, this._interactionY + 120, {
       fontSize: 16,
-      color: "rgba(255,255,255,0.7)",
+      color: "rgba(255,255,255,0.9)",
       align: "center",
     });
   }
@@ -1274,7 +1278,7 @@ class GameScene {
 
     drawText(ctx, "用两根手指同时触摸屏幕", width / 2, this._interactionY + 110, {
       fontSize: 16,
-      color: "rgba(255,255,255,0.7)",
+      color: "rgba(255,255,255,0.9)",
       align: "center",
     });
   }
@@ -1306,7 +1310,7 @@ class GameScene {
 
     drawText(ctx, this._hintText, width / 2, cardY + 70, {
       fontSize: 15,
-      color: "rgba(255,255,255,0.7)",
+      color: "rgba(255,255,255,0.9)",
       align: "center",
       maxWidth: cardW - 30,
       lineHeight: 1.4,
@@ -1366,7 +1370,7 @@ class GameScene {
     // Explanation
     drawText(ctx, this._resultExplanation, width / 2, cardY + 180, {
       fontSize: 17,
-      color: "rgba(255,255,255,0.7)",
+      color: "rgba(255,255,255,0.9)",
       align: "center",
       maxWidth: cardW - 40,
       lineHeight: 1.5,
