@@ -104,10 +104,13 @@ class GameScene {
 
     // Layout constants
     this._padding = 20;
-    this._topBarHeight = 50;
+    this._topBarHeight = 48;
     this._progressBarY = 0;
     this._questionCardY = 0;
     this._interactionY = 0;
+
+    // Option border accent colors: A=blue, B=green, C=orange, D=purple
+    this._optionAccentColors = ["#4A90D9", "#2ED573", "#FF9F43", "#A55EEA"];
   }
 
   // ---------------------------------------------------------------------------
@@ -195,10 +198,10 @@ class GameScene {
    * Compute vertical layout positions
    */
   _computeLayout() {
-    this._progressBarY = this._topBarHeight + 10;
-    this._questionCardY = this._progressBarY + 24;
-    // Interaction area starts below the question card; actual Y depends on question height
-    this._interactionY = this._questionCardY + 130;
+    this._progressBarY = this._topBarHeight + 6;
+    this._questionCardY = Math.floor(this.height * 0.10);
+    // Interaction area starts in the middle-lower part of the screen (thumb-friendly)
+    this._interactionY = Math.floor(this.height * 0.38);
   }
 
   // ---------------------------------------------------------------------------
@@ -219,16 +222,16 @@ class GameScene {
     const cx = this.width / 2;
     const level = this.level;
 
-    // Back button (top-left)
+    // Back button (top-left, smaller)
     this.backBtn = new Button({
-      x: 36,
+      x: 30,
       y: this._topBarHeight / 2,
-      width: 50,
-      height: 36,
+      width: 40,
+      height: 32,
       text: "←",
       bg: "transparent",
       color: COLORS.text,
-      fontSize: 22,
+      fontSize: 20,
       radius: 8,
       onTap: () => {
         audioManager.playClick();
@@ -237,18 +240,18 @@ class GameScene {
     });
     this.buttons.push(this.backBtn);
 
-    // Hint button (top-right) only if level has hint
+    // Hint button (top-right, pill style) only if level has hint
     if (level.hint) {
       this.hintBtn = new Button({
-        x: this.width - 50,
+        x: this.width - 40,
         y: this._topBarHeight / 2,
-        width: 60,
-        height: 34,
+        width: 54,
+        height: 28,
         text: "提示",
         bg: COLORS.primary,
-        color: COLORS.text,
-        fontSize: 14,
-        radius: 17,
+        color: COLORS.white,
+        fontSize: 13,
+        radius: 14,
         onTap: () => this._onHintTap(),
       });
       this.buttons.push(this.hintBtn);
@@ -277,10 +280,10 @@ class GameScene {
   _buildOptionButtons(options, correctIndex) {
     if (!options) return;
     const cx = this.width / 2;
-    const btnW = this.width - this._padding * 4;
-    const btnH = 48;
-    const gap = 14;
-    let startY = this._interactionY + 20;
+    const btnW = this.width - this._padding * 3;
+    const btnH = 56;
+    const gap = 12;
+    let startY = this._interactionY + 16;
 
     this.optionButtons = options.map((text, i) => {
       const btn = new Button({
@@ -291,10 +294,12 @@ class GameScene {
         text: `${OPTION_LABELS[i]}. ${text}`,
         bg: COLORS.white,
         color: COLORS.text,
-        fontSize: 16,
-        radius: 12,
+        fontSize: 19,
+        radius: 14,
         onTap: () => this._onOptionTap(i, correctIndex),
       });
+      // Store accent color index for custom rendering
+      btn._accentIndex = i;
       this.buttons.push(btn);
       return btn;
     });
@@ -547,7 +552,10 @@ class GameScene {
     if (!level) return;
 
     ctx.clearRect(0, 0, width, height);
-    drawBackground(ctx, width, height, "#FFF8DC", "#F5F5F5");
+    drawBackground(ctx, width, height, "#FFF8E1", "#FFF3E0");
+
+    // Decorative background circles for visual personality
+    this._renderDecorations();
 
     this._renderTopBar();
     this._renderProgressBar();
@@ -566,25 +574,68 @@ class GameScene {
   }
 
   /**
+   * Draw translucent decorative circles in the background for visual personality
+   */
+  _renderDecorations() {
+    const { ctx, width, height } = this;
+    ctx.save();
+
+    // Semi-transparent decorative circles at fixed positions (seeded by levelId)
+    const decorations = [
+      { x: width * 0.1, y: height * 0.15, r: 35, color: "rgba(255, 215, 0, 0.08)" },
+      { x: width * 0.85, y: height * 0.08, r: 25, color: "rgba(74, 144, 217, 0.06)" },
+      { x: width * 0.92, y: height * 0.55, r: 45, color: "rgba(255, 159, 67, 0.07)" },
+      { x: width * 0.08, y: height * 0.75, r: 30, color: "rgba(165, 94, 234, 0.06)" },
+    ];
+
+    for (const d of decorations) {
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+      ctx.fillStyle = d.color;
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+
+  /**
    * Render the top bar: level number, progress count, back button, hint button
    */
   _renderTopBar() {
     const { ctx, width, level } = this;
     const barH = this._topBarHeight;
     const progress = levelManager.getProgress();
+    const cx = width / 2;
+    const cy = barH / 2;
 
-    // Level number (center)
-    drawText(ctx, `第 ${this.levelId} 关`, width / 2, barH / 2, {
-      fontSize: 18,
-      bold: true,
-      color: COLORS.text,
-      align: "center",
-    });
+    // Level badge: gold pill with white text (centered)
+    const badgeText = `第${this.levelId}关`;
+    ctx.save();
+    ctx.font = "bold 15px sans-serif";
+    const badgeW = ctx.measureText(badgeText).width + 28;
+    const badgeH = 28;
+    const badgeX = cx - badgeW / 2;
+    const badgeY = cy - badgeH / 2;
 
-    // Progress count (right of center, before hint button)
-    const countX = this.hintBtn ? width - 100 : width - 30;
-    drawText(ctx, `${progress.current}/${progress.total}`, countX, barH / 2, {
-      fontSize: 13,
+    // Pill background (gold gradient)
+    const pillGrad = ctx.createLinearGradient(badgeX, badgeY, badgeX + badgeW, badgeY);
+    pillGrad.addColorStop(0, "#FFD700");
+    pillGrad.addColorStop(1, "#FFA500");
+    ctx.fillStyle = pillGrad;
+    roundRect(ctx, badgeX, badgeY, badgeW, badgeH, badgeH / 2);
+    ctx.fill();
+
+    // Badge text
+    ctx.fillStyle = COLORS.white;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(badgeText, cx, cy);
+    ctx.restore();
+
+    // Progress count (right side, small)
+    const countX = this.hintBtn ? width - 90 : width - 24;
+    drawText(ctx, `${progress.current}/${progress.total}`, countX, cy, {
+      fontSize: 12,
       color: COLORS.textMuted,
       align: "right",
     });
@@ -605,7 +656,10 @@ class GameScene {
     const barW = width - this._padding * 4;
     const barX = this._padding * 2;
 
-    drawProgressBar(ctx, barX, this._progressBarY, barW, 6, progress.percentage);
+    drawProgressBar(ctx, barX, this._progressBarY, barW, 4, progress.percentage, {
+      bgColor: "rgba(0,0,0,0.06)",
+      fillColor: COLORS.primary,
+    });
   }
 
   /**
@@ -616,17 +670,43 @@ class GameScene {
     const cardX = this._padding;
     const cardY = this._questionCardY;
     const cardW = width - this._padding * 2;
-    const cardH = 100;
 
-    drawCard(ctx, cardX, cardY, cardW, cardH);
+    // Measure question text height to auto-size card
+    ctx.save();
+    ctx.font = "bold 22px sans-serif";
+    const textMaxW = cardW - 40;
+    const questionText = level.question || "";
+    const textW = ctx.measureText(questionText).width;
+    const lineCount = Math.max(1, Math.ceil(textW / textMaxW));
+    ctx.restore();
 
-    // Question text (word-wrapped)
-    drawText(ctx, level.question, width / 2, cardY + cardH / 2, {
-      fontSize: 18,
+    const cardH = Math.max(90, lineCount * 33 + 40);
+
+    // Card with shadow
+    drawCard(ctx, cardX, cardY, cardW, cardH, { radius: 16 });
+
+    // Gold left accent strip (4px)
+    ctx.save();
+    const accentW = 4;
+    const accentR = 16;
+    ctx.fillStyle = "#FFD700";
+    ctx.beginPath();
+    ctx.moveTo(cardX + accentR, cardY);
+    ctx.arcTo(cardX, cardY, cardX, cardY + cardH, accentR);
+    ctx.arcTo(cardX, cardY + cardH, cardX + accentW + accentR, cardY + cardH, accentR);
+    ctx.lineTo(cardX + accentW, cardY + cardH);
+    ctx.lineTo(cardX + accentW, cardY);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+
+    // Question text (word-wrapped, bigger font)
+    drawText(ctx, questionText, width / 2 + 2, cardY + cardH / 2, {
+      fontSize: 22,
       bold: true,
       color: COLORS.text,
       align: "center",
-      maxWidth: cardW - 30,
+      maxWidth: textMaxW,
       lineHeight: 1.5,
     });
   }
@@ -655,19 +735,53 @@ class GameScene {
    */
   _renderOptionButtons() {
     const { ctx } = this;
-    for (const btn of this.optionButtons) {
-      // Color coding after answer
+    const correctIdx = this.level.answer;
+
+    for (let i = 0; i < this.optionButtons.length; i++) {
+      const btn = this.optionButtons[i];
+      const accentColor = this._optionAccentColors[i] || "#4A90D9";
+
+      // Update colors based on answer state
       if (this._answered) {
-        const idx = this.optionButtons.indexOf(btn);
-        if (idx === this.level.answer) {
+        if (i === correctIdx) {
           btn.bg = COLORS.green;
           btn.color = COLORS.white;
-        } else if (idx === this._selectedOption && !this._isCorrect) {
+        } else if (i === this._selectedOption && !this._isCorrect) {
           btn.bg = COLORS.red;
           btn.color = COLORS.white;
+        } else {
+          // Fade out non-selected, non-correct options
+          btn.bg = COLORS.white;
+          btn.color = COLORS.textMuted;
         }
       }
+
+      // Render the base button
       btn.render(ctx);
+
+      // Draw colored left accent strip (4px) on top of the button
+      if (!this._answered || i === correctIdx || i === this._selectedOption) {
+        ctx.save();
+        const stripW = 4;
+        const bx = btn.left;
+        const by = btn.top;
+        const bh = btn.height;
+        const br = btn.radius;
+
+        ctx.fillStyle = this._answered && i === correctIdx ? COLORS.green
+          : this._answered && i === this._selectedOption ? COLORS.red
+          : accentColor;
+
+        ctx.beginPath();
+        ctx.moveTo(bx + br, by);
+        ctx.arcTo(bx, by, bx, by + bh, br);
+        ctx.arcTo(bx, by + bh, bx + stripW + br, by + bh, br);
+        ctx.lineTo(bx + stripW, by + bh);
+        ctx.lineTo(bx + stripW, by);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
     }
   }
 
