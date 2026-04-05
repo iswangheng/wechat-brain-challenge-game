@@ -153,9 +153,73 @@ const getLevelSections = () => {
   };
 };
 
+/**
+ * Generate a daily challenge play order using date as seed.
+ * Same date = same order. Selects 20 questions across difficulty tiers.
+ * @returns {number[]} array of 20 level IDs
+ */
+const generateDailyOrder = () => {
+  if (!levels.length) loadLevels();
+
+  // Use today's date as seed for pseudo-random
+  const today = new Date().toISOString().slice(0, 10);
+  let seed = 0;
+  for (let i = 0; i < today.length; i++) {
+    seed = ((seed << 5) - seed) + today.charCodeAt(i);
+    seed = seed & seed; // Convert to 32-bit integer
+  }
+
+  // Seeded random function
+  const seededRandom = () => {
+    seed = (seed * 1664525 + 1013904223) & 0x7fffffff;
+    return seed / 0x7fffffff;
+  };
+
+  // Seeded shuffle
+  const seededShuffle = (arr) => {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(seededRandom() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  };
+
+  // Pick 4 from easy, 6 from medium, 5 from hard, 3 from expert, 2 from hell
+  const tiers = [
+    { levels: levels.filter(l => l.id <= 10), pick: 4 },
+    { levels: levels.filter(l => l.id > 10 && l.id <= 30), pick: 6 },
+    { levels: levels.filter(l => l.id > 30 && l.id <= 50), pick: 5 },
+    { levels: levels.filter(l => l.id > 50 && l.id <= 70), pick: 3 },
+    { levels: levels.filter(l => l.id > 70), pick: 2 },
+  ];
+
+  const order = [];
+  for (const tier of tiers) {
+    const shuffled = seededShuffle(tier.levels.map(l => l.id));
+    order.push(...shuffled.slice(0, tier.pick));
+  }
+
+  return order;
+};
+
+/**
+ * Get level for daily challenge by position
+ * @param {number} position - 1-based
+ * @returns {Object|null}
+ */
+const getDailyLevel = (position) => {
+  const order = generateDailyOrder();
+  if (position < 1 || position > order.length) return null;
+  return getLevel(order[position - 1]);
+};
+
+const getDailyLevelCount = () => 20;
+
 module.exports = {
   loadLevels, getLevel, getCurrentLevel, completeLevel, recordWrongAnswer,
   getLevelCount, getCompletedCount, isLevelUnlocked, getProgress, isAllCompleted,
   getLevelSections, generatePlayOrder, getPlayOrder, getLevelIdAtPosition,
   getLevelAtPosition, resetAndShuffle,
+  generateDailyOrder, getDailyLevel, getDailyLevelCount,
 };

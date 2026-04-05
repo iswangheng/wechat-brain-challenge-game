@@ -150,6 +150,62 @@ const updateStats = (updates) => {
   set(KEYS.STATS, stats);
 };
 
+// Best record tracking
+const getBestRecord = () => {
+  return get("game_best_record") || { level: 0, combo: 0, stars: 0, date: "" };
+};
+
+const saveBestRecord = (record) => {
+  const current = getBestRecord();
+  // Only save if new record is better
+  if (record.level > current.level) {
+    set("game_best_record", { ...record, date: new Date().toISOString().slice(0, 10) });
+    return true; // new record!
+  }
+  return false;
+};
+
+// Achievement storage
+const getAchievements = () => {
+  return get("game_achievements") || {};
+};
+
+const unlockAchievement = (id) => {
+  const achievements = getAchievements();
+  if (!achievements[id]) {
+    achievements[id] = { unlocked: true, date: new Date().toISOString().slice(0, 10) };
+    set("game_achievements", achievements);
+    return true; // newly unlocked
+  }
+  return false; // already had it
+};
+
+// Rank/XP storage
+const getRankData = () => {
+  return get("game_rank") || { xp: 0, rank: 0 };
+};
+
+const addXP = (amount) => {
+  const data = getRankData();
+  data.xp += amount;
+  set("game_rank", data);
+  return data;
+};
+
+// Daily challenge
+const getDailyData = () => {
+  const today = new Date().toISOString().slice(0, 10);
+  const data = get("game_daily") || { date: "", completed: false, score: 0 };
+  if (data.date !== today) {
+    return { date: today, completed: false, score: 0 };
+  }
+  return data;
+};
+
+const saveDailyData = (data) => {
+  set("game_daily", data);
+};
+
 module.exports = {
   get,
   set,
@@ -161,4 +217,12 @@ module.exports = {
   saveSettings,
   getStats,
   updateStats,
+  getBestRecord,
+  saveBestRecord,
+  getAchievements,
+  unlockAchievement,
+  getRankData,
+  addXP,
+  getDailyData,
+  saveDailyData,
 };

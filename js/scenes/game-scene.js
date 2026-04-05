@@ -17,6 +17,8 @@ const storage = require("../utils/storage");
 const adManager = require("../utils/ad-manager");
 const audioManager = require("../utils/audio-manager");
 const sensorManager = require("../utils/sensor-manager");
+const achievementManager = require("../utils/achievement-manager");
+const rankManager = require("../utils/rank-manager");
 
 // Label prefixes for option buttons
 const OPTION_LABELS = ["A", "B", "C", "D"];
@@ -136,6 +138,17 @@ class GameScene {
     this._milestone = false;
     this._milestoneTime = 0;
     this._milestoneParticlesSpawned = false;
+
+    // 7. Session tracking (best record, achievements, XP)
+    this._totalStars = 0;
+    this._maxCombo = 0;
+    this._totalNoHint = 0;
+    this._mode = "normal"; // "normal" or "daily"
+    this._newRecord = false;
+    this._rankResult = null;
+    this._achievementNotification = null;
+    this._achievementShowTime = 0;
+    this.shareBtn = null;
   }
 
   // ---------------------------------------------------------------------------
@@ -148,6 +161,12 @@ class GameScene {
    */
   onEnter(params = {}) {
     this._position = params.position || params.level || 1;
+    this._mode = params.mode || "normal";
+    this._totalStars = 0;
+    this._maxCombo = 0;
+    this._totalNoHint = 0;
+    this._newRecord = false;
+    this._rankResult = null;
     this._loadLevelAtPosition(this._position);
   }
 
@@ -652,6 +671,18 @@ class GameScene {
 
     // Particles render on top of everything (after restore so they don't shake)
     this._updateAndRenderParticles();
+
+    // Achievement notification
+    const ach = achievementManager.popNotification();
+    if (ach) {
+      this._achievementNotification = ach;
+      this._achievementShowTime = Date.now();
+    }
+    if (this._achievementNotification && Date.now() - this._achievementShowTime < 2000) {
+      this._renderAchievementNotification();
+    } else if (this._achievementNotification && Date.now() - this._achievementShowTime >= 2000) {
+      this._achievementNotification = null;
+    }
   }
 
   /**
@@ -698,7 +729,7 @@ class GameScene {
     this.backBtn.render(ctx);
 
     // Level badge - white rounded pill
-    const badgeText = `第 ${this.levelId} 关`;
+    const badgeText = this._mode === "daily" ? `每日 ${this._position}/20` : `第 ${this.levelId} 关`;
     ctx.save();
     ctx.font = "bold 14px sans-serif";
     const badgeW = ctx.measureText(badgeText).width + 24;
@@ -1377,6 +1408,11 @@ class GameScene {
       lineHeight: 1.5,
     });
 
+    // Share button (wrong answer only)
+    if (this.shareBtn) {
+      this.shareBtn.render(ctx);
+    }
+
     // Result action button
     if (this.resultBtn) {
       this.resultBtn.render(ctx);
@@ -1405,12 +1441,15 @@ class GameScene {
       return;
     }
 
-    // If result overlay is shown, only handle result button
+    // If result overlay is shown, only handle result/share buttons
     if (this._showResult) {
       if (this.resultBtn && this.resultBtn.hitTest(x, y)) {
         this.resultBtn._pressed = true;
-        this.render();
       }
+      if (this.shareBtn && this.shareBtn.hitTest(x, y)) {
+        this.shareBtn._pressed = true;
+      }
+      this.render();
       return;
     }
 
@@ -1484,8 +1523,12 @@ class GameScene {
    * @param {TouchEvent} e
    */
   onTouchEnd(x, y, e) {
-    // Result overlay button
+    // Result overlay buttons
     if (this._showResult) {
+      if (this.shareBtn && this.shareBtn._pressed && this.shareBtn.hitTest(x, y) && this.shareBtn.onTap) {
+        this.shareBtn.onTap();
+      }
+      if (this.shareBtn) this.shareBtn._pressed = false;
       if (this.resultBtn && this.resultBtn._pressed && this.resultBtn.hitTest(x, y) && this.resultBtn.onTap) {
         this.resultBtn.onTap();
       }
@@ -1873,6 +1916,7 @@ class GameScene {
     this._timerStartTime = null;
 
     audioManager.playCorrect();
+    try { wx.vibrateShort({ type: "medium" }); } catch (_e) { /* ignore */ }
     levelManager.completeLevel(this.levelId);
 
     // Stop sensors and timers
@@ -1914,6 +1958,36 @@ class GameScene {
       adManager.showInterstitial();
     }
 
+    // Track session stats
+    this._totalStars += this._stars || 1;
+    this._maxCombo = Math.max(this._maxCombo, this._combo);
+    if (!this._hintVisible) this._totalNoHint++;
+
+    // Check achievements
+    const answerTime = elapsedSec < 999 ? elapsedSec : 5;
+    achievementManager.onCorrectAnswer({
+      position: this._position,
+      combo: this._combo,
+      answerTime,
+      totalNoHint: this._totalNoHint,
+    });
+
+    // Daily mode: cap at 20 questions
+    if (this._mode === "daily" && this._position >= 20) {
+      this._rankResult = rankManager.addSessionXP(this._position, this._totalStars, this._maxCombo);
+      const dailyData = storage.getDailyData();
+      dailyData.completed = true;
+      dailyData.score = this._position;
+      storage.saveDailyData(dailyData);
+      this.sceneManager.switchTo("result", {
+        mode: "daily",
+        score: this._position,
+        stars: this._totalStars,
+        xp: this._rankResult,
+      });
+      return;
+    }
+
     this._showResultOverlay(true);
   }
 
@@ -1936,7 +2010,26 @@ class GameScene {
     this._shakeTime = Date.now();
 
     audioManager.playWrong();
+    try { wx.vibrateLong(); } catch (_e) { /* ignore */ }
     levelManager.recordWrongAnswer();
+
+    // Save best record
+    this._newRecord = storage.saveBestRecord({
+      level: this._position - 1,
+      combo: this._maxCombo,
+      stars: this._totalStars,
+    });
+
+    // Add XP
+    this._rankResult = rankManager.addSessionXP(this._position - 1, this._totalStars, this._maxCombo);
+
+    // Save daily data if in daily mode
+    if (this._mode === "daily") {
+      const dailyData = storage.getDailyData();
+      dailyData.completed = true;
+      dailyData.score = this._position - 1;
+      storage.saveDailyData(dailyData);
+    }
 
     this._showResultOverlay(false);
   }
@@ -1961,19 +2054,45 @@ class GameScene {
       this._resultComment = correctPraises[Math.floor(Math.random() * correctPraises.length)];
     } else {
       this._resultEmoji = "💀";
-      this._resultComment = `挑战结束！你闯到了第 ${this._position} 关`;
+      let wrongComment = `挑战结束！你闯到了第 ${this._position} 关`;
+      if (this._newRecord) wrongComment = "🎉 新纪录！" + wrongComment;
+      this._resultComment = wrongComment;
     }
-    this._resultExplanation = this.level.explanation || "";
+
+    // Build explanation with XP info
+    let explanation = this.level.explanation || "";
+    if (!isCorrect && this._rankResult) {
+      explanation += explanation ? "\n" : "";
+      explanation += `+${this._rankResult.xpEarned} XP`;
+      if (this._rankResult.rankUp) {
+        explanation += ` | 🎉 晋升 ${this._rankResult.newRank.icon} ${this._rankResult.newRank.name}`;
+      }
+    }
+    this._resultExplanation = explanation;
 
     const cx = this.width / 2;
-    const cardY = (this.height - 320) / 2;
-    const btnY = cardY + 270;
+    const cardH = isCorrect ? 320 : 370;
+    const cardY = (this.height - cardH) / 2;
+    const btnY = cardY + cardH - 50;
+
+    // Reset share button
+    this.shareBtn = null;
 
     if (isCorrect) {
       // Check if there's a next level
       const nextPos = this._position + 1;
       const totalLevels = levelManager.getLevelCount();
       const hasNext = nextPos <= totalLevels;
+
+      if (!hasNext) {
+        // All levels cleared — save XP
+        this._newRecord = storage.saveBestRecord({
+          level: this._position,
+          combo: this._maxCombo,
+          stars: this._totalStars,
+        });
+        this._rankResult = rankManager.addSessionXP(this._position, this._totalStars, this._maxCombo);
+      }
 
       this.resultBtn = new Button({
         x: cx,
@@ -1995,6 +2114,28 @@ class GameScene {
       });
     } else {
       // Wrong answer = challenge over! Show score and go to result
+
+      // Share challenge button
+      this.shareBtn = new Button({
+        x: cx,
+        y: btnY - 55,
+        width: 180,
+        height: 44,
+        text: "\uD83D\uDCE4 挑战好友",
+        bg: "rgba(255,255,255,0.2)",
+        color: "#FFFFFF",
+        fontSize: 16,
+        radius: 22,
+        onTap: () => {
+          try {
+            wx.shareAppMessage({
+              title: `我闯到了第${this._position}关，你能超过我吗？`,
+              imageUrl: "",
+            });
+          } catch (_e) { /* ignore */ }
+        },
+      });
+
       this.resultBtn = new Button({
         x: cx,
         y: btnY,
@@ -2143,6 +2284,49 @@ class GameScene {
     ctx.shadowColor = "rgba(0,0,0,0.5)";
     ctx.shadowBlur = 8;
     ctx.fillText(text, 0, 0);
+    ctx.restore();
+  }
+
+  /**
+   * Render achievement notification banner at top of screen
+   */
+  _renderAchievementNotification() {
+    const { ctx, width } = this;
+    const ach = this._achievementNotification;
+    if (!ach) return;
+
+    const elapsed = Date.now() - this._achievementShowTime;
+    // Slide-down animation (first 300ms) and fade-out (last 500ms)
+    let offsetY = 0;
+    let alpha = 1.0;
+    if (elapsed < 300) {
+      offsetY = -40 * (1 - elapsed / 300);
+    }
+    if (elapsed > 1500) {
+      alpha = Math.max(0, 1 - (elapsed - 1500) / 500);
+    }
+
+    const text = `\uD83C\uDFC5 成就解锁: ${ach.icon} ${ach.name}`;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+
+    // Gold background pill
+    ctx.font = "bold 14px sans-serif";
+    const textW = ctx.measureText(text).width + 32;
+    const pillH = 34;
+    const pillX = (width - textW) / 2;
+    const pillY = this._topBarHeight + 8 + offsetY;
+
+    ctx.fillStyle = "rgba(255, 215, 0, 0.9)";
+    roundRect(ctx, pillX, pillY, textW, pillH, pillH / 2);
+    ctx.fill();
+
+    // White text
+    ctx.fillStyle = "#333333";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(text, width / 2, pillY + pillH / 2);
+
     ctx.restore();
   }
 
