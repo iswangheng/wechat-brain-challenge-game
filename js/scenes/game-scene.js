@@ -1129,36 +1129,36 @@ class GameScene {
     ctx.fillRect(0, 0, width, height);
 
     // Card
-    const cardW = width * 0.8;
-    const cardH = 280;
+    const cardW = width * 0.85;
+    const cardH = 320;
     const cardX = (width - cardW) / 2;
     const cardY = (height - cardH) / 2;
 
     drawCard(ctx, cardX, cardY, cardW, cardH);
 
     // Emoji
-    drawText(ctx, this._resultEmoji, width / 2, cardY + 40, {
-      fontSize: 42,
+    drawText(ctx, this._resultEmoji, width / 2, cardY + 50, {
+      fontSize: 52,
       align: "center",
     });
 
     // Funny comment
-    drawText(ctx, this._resultComment, width / 2, cardY + 90, {
-      fontSize: 16,
+    drawText(ctx, this._resultComment, width / 2, cardY + 115, {
+      fontSize: 22,
       bold: true,
       color: COLORS.text,
       align: "center",
       maxWidth: cardW - 40,
-      lineHeight: 1.4,
+      lineHeight: 1.5,
     });
 
     // Explanation
-    drawText(ctx, this._resultExplanation, width / 2, cardY + 145, {
-      fontSize: 14,
+    drawText(ctx, this._resultExplanation, width / 2, cardY + 180, {
+      fontSize: 17,
       color: COLORS.textLight,
       align: "center",
       maxWidth: cardW - 40,
-      lineHeight: 1.4,
+      lineHeight: 1.5,
     });
 
     // Result action button
@@ -1705,8 +1705,8 @@ class GameScene {
     this._resultExplanation = this.level.explanation || "";
 
     const cx = this.width / 2;
-    const cardY = (this.height - 280) / 2;
-    const btnY = cardY + 240;
+    const cardY = (this.height - 320) / 2;
+    const btnY = cardY + 270;
 
     if (isCorrect) {
       // Check if there's a next level
