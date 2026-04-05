@@ -1,9 +1,0 @@
-<view wx:if="{{show && !adError && !hidden}}" class="ad-container">
-  <ad
-    unit-id="{{adUnitId}}"
-    ad-intervals="30"
-    bindload="onAdLoad"
-    binderror="onAdError"
-    bindclose="onAdClose"
-  ></ad>
-</view>

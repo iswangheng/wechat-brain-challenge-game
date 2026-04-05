@@ -1,7 +1,0 @@
-{
-  "navigationBarTitleText": "结算",
-  "usingComponents": {
-    "share-card": "/components/ShareCard/ShareCard",
-    "ad-banner": "/components/AdBanner/AdBanner"
-  }
-}

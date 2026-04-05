@@ -1,6 +1,0 @@
-{
-  "navigationBarTitleText": "你能过几关",
-  "usingComponents": {
-    "leaderboard": "/components/Leaderboard/Leaderboard"
-  }
-}

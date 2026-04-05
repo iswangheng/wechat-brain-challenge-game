@@ -8,61 +8,47 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 技术栈
 
-- 微信小程序原生开发
+- **微信小游戏**（`compileType: "game"`）
+- 原生 Canvas 2D 渲染（无游戏引擎）
 - 纯前端，无后端依赖
-- 包管理器：npm
-- 开发工具：微信开发者工具
-
-## 常用命令
-
-```bash
-npm install              # 安装依赖
-npm run dev              # 开发模式（需在微信开发者工具中运行）
-npm run build            # 构建生产版本
-npm test                 # 运行测试
-```
+- 开发工具：微信开发者工具（小游戏模式）
 
 ## 架构
 
 ```
-src/
-├── app.js / app.json / app.wxss   - 小程序入口和全局样式
-├── pages/
-│   ├── index/          - 首页（进度展示、开始/继续/选关、排行榜、音效开关）
-│   ├── game/           - 核心游戏页（加载关卡、处理答题和交互逻辑）
-│   ├── result/         - 通关结果页（完成数、评语、分享）
-│   └── share/          - 分享落地页
-├── components/
-│   ├── QuestionCard/   - 题目卡片组件
-│   ├── OptionButton/   - 选项按钮组件
-│   ├── ShareCard/      - 分享卡片组件
-│   ├── AdBanner/       - 广告 Banner 组件
-│   └── Leaderboard/    - 排行榜组件
-├── utils/
-│   ├── storage.js      - 本地存储封装（进度、设置、统计）
-│   ├── level-manager.js - 关卡加载、进度跟踪、解锁逻辑
-│   ├── ad-manager.js   - 广告管理（激励视频、插屏、Banner）
-│   ├── sensor-manager.js - 传感器管理（加速度计、陀螺仪）
-│   ├── share-manager.js - 分享配置生成
-│   ├── share-image.js  - Canvas 动态生成分享图
-│   └── audio-manager.js - 音效管理（正确/错误/点击）
+├── game.js                - 小游戏入口（Canvas 初始化、游戏循环、触摸路由）
+├── game.json              - 小游戏配置
+├── project.config.json    - 项目配置
+├── js/
+│   ├── base/
+│   │   ├── canvas-adapter.js   - Canvas 适配（DPR、屏幕尺寸）
+│   │   └── scene-manager.js    - 场景管理器（注册/切换/渲染/触摸分发）
+│   ├── scenes/
+│   │   ├── home-scene.js       - 首页场景（进度、开始/继续、音效开关）
+│   │   ├── game-scene.js       - 核心游戏场景（80关全部玩法）
+│   │   └── result-scene.js     - 结果场景（通关数、评语、导航）
+│   ├── ui/
+│   │   └── components.js       - Canvas UI 组件（Button/Text/ProgressBar/Card）
+│   └── utils/
+│       ├── storage.js          - 本地存储封装（进度、设置、统计）
+│       ├── level-manager.js    - 关卡加载、进度跟踪、解锁逻辑
+│       ├── ad-manager.js       - 广告管理（激励视频、插屏）
+│       ├── sensor-manager.js   - 传感器管理（加速度计、陀螺仪）
+│       └── audio-manager.js    - 音效管理（正确/错误/点击）
 ├── data/
-│   ├── levels.json     - 80 关关卡数据
-│   └── share-texts.json - 分享文案模板
-├── audio/              - 音效文件（correct/wrong/click.mp3）
-└── images/             - 图片资源
-docs/                   - 项目文档（市场调研等）
-tests/                  - 测试
+│   └── levels.js               - 80 关关卡数据（JS 模块）
+├── audio/                      - 音效文件（correct/wrong/click.mp3）
+└── docs/                       - 项目文档
 ```
 
 ## 关卡类型
 
 | 类型 | 说明 | 交互方式 |
 |------|------|----------|
-| `riddle` | 脑筋急转弯 | 选择题 |
+| `riddle` | 脑筋急转弯 | 选择题（A/B/C/D） |
 | `trivia` | 冷知识问答 | 选择题 |
-| `text_trap` | 找不同字 | 点击正确字符（`tap_char`） |
-| `interactive` | 交互式玩法 | 多种，见下 |
+| `text_trap` | 找不同字 | 点击字符网格中的不同字 |
+| `interactive` | 交互式玩法 | 15 种交互方式，见下 |
 
 ### Interactive 交互方法
 `shake` 摇一摇、`tilt` 倾斜手机、`flip` 翻转手机、`color_wait` 变色按钮定时点击、`lights_puzzle` 关灯游戏、`sequence_tap` 顺序点击、`scratch` 擦除、`drag_text` 拖拽文字、`drag_element` 拖拽元素、`multi_touch` 多指触控、`input_answer` 输入答案、`pinch_zoom` 双指放大、`trick_choice` 陷阱选项、`swipe` 滑动、`tap_text` 点击文字
@@ -74,11 +60,13 @@ tests/                  - 测试
 - 提示功能需看激励视频解锁
 - 广告 ID 为占位符（`adunit-placeholder-*`），上线前需替换
 
-## 小程序开发要点
+## 小游戏开发要点
 
-- 避免频繁 setData，合并数据更新以优化性能
-- 首屏加载目标 < 2 秒，图片用 webp 格式
-- 广告不能阻断核心功能，首次加载不弹插屏
+- 所有渲染通过 Canvas 2D API（fillRect/fillText/arc 等），无 DOM/WXML
+- 场景切换通过 SceneManager.switchTo(name, params)
+- 触摸事件通过 wx.onTouchStart/Move/End 全局监听，由 SceneManager 分发到当前场景
+- 游戏循环使用 requestAnimationFrame
+- 传感器交互（shake/tilt/flip）需真机测试，模拟器不可用
 
 ## 交流与命名约定
 

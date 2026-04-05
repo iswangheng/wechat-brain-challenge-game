@@ -1,8 +1,0 @@
-.ad-container {
-  width: 100%;
-  min-height: 100rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16rpx 0;
-}

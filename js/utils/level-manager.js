@@ -2,7 +2,7 @@
  * Level loading, progress tracking, and unlock logic
  */
 const storage = require("./storage");
-const levelsData = require("../../data/levels.json");
+const levelsData = require("../../data/levels");
 
 let levels = [];
 
