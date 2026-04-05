@@ -105,7 +105,7 @@ const showInterstitial = () => {
  */
 const shouldShowInterstitial = (level) => {
   if (level < INTERSTITIAL_START_LEVEL) return false;
-  return level % INTERSTITIAL_INTERVAL === 0;
+  return (level - INTERSTITIAL_START_LEVEL) % INTERSTITIAL_INTERVAL === 0;
 };
 
 /**

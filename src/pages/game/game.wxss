@@ -194,7 +194,7 @@
 /* Lights puzzle */
 .lights-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  /* grid-template-columns set dynamically via inline style */
   gap: 16rpx;
   padding: 32rpx 80rpx;
 }

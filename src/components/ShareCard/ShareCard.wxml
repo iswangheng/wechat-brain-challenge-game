@@ -13,7 +13,7 @@
     <view class="level-info">第 {{level}} 关</view>
 
     <!-- Share button -->
-    <button class="share-btn" open-type="share" bindtap="onShare">
+    <button class="share-btn" open-type="share">
       <text class="share-icon">📤</text>
       <text>分享给好友</text>
     </button>

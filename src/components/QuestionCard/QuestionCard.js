@@ -77,8 +77,9 @@ Component({
 
       if (level.interaction.method === "scratch") {
         const percent = this.data.scratchPercent + 0.5;
+        const threshold = level.interaction.threshold || 60;
         this.setData({ scratchPercent: Math.min(percent, 100) });
-        if (percent >= 60 && !this._interactCompleted) {
+        if (percent >= threshold && !this._interactCompleted) {
           this._interactCompleted = true;
           this.triggerEvent("interactcomplete", { method: "scratch" });
         }

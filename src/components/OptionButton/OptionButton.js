@@ -52,6 +52,7 @@ Component({
      * Reset selection state
      */
     reset() {
+      this._tapping = false;
       this.setData({
         selectedIndex: -1,
         showResult: false,

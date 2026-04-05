@@ -85,7 +85,7 @@
   </view>
 
   <!-- Lights puzzle grid -->
-  <view wx:if="{{level.type === 'interactive' && level.interaction.method === 'lights_puzzle'}}" class="lights-grid">
+  <view wx:if="{{level.type === 'interactive' && level.interaction.method === 'lights_puzzle'}}" class="lights-grid" style="grid-template-columns: repeat({{lightsGridSize || 3}}, 1fr)">
     <view
       wx:for="{{lights}}"
       wx:key="index"

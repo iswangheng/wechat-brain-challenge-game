@@ -85,7 +85,7 @@ Page({
           bigText: `${completed}`,
           bigLabel: "关已通过",
           bottomText: `超过${percentage}%的玩家!`,
-          themeIndex: completed >= 80 ? 2 : 0,
+          themeIndex: completed >= levelManager.getLevelCount() ? 2 : 0,
         }),
       )
       .then((path) => {

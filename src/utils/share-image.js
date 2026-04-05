@@ -29,12 +29,23 @@ const _roundRect = (ctx, x, y, w, h, r) => {
  */
 const getCanvas = (pageInstance) => {
   return new Promise((resolve, reject) => {
+    let settled = false;
+    const timer = setTimeout(() => {
+      if (!settled) {
+        settled = true;
+        reject(new Error("Canvas query timed out"));
+      }
+    }, 3000);
+
     try {
       const query = pageInstance.createSelectorQuery();
       query
         .select("#shareCanvas")
         .fields({ node: true, size: true })
         .exec((res) => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
           if (res && res[0] && res[0].node) {
             resolve(res[0].node);
           } else {
@@ -42,7 +53,11 @@ const getCanvas = (pageInstance) => {
           }
         });
     } catch (err) {
-      reject(err);
+      if (!settled) {
+        settled = true;
+        clearTimeout(timer);
+        reject(err);
+      }
     }
   });
 };

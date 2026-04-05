@@ -23,6 +23,8 @@ const _createAudio = (src) => {
  * Initialize audio instances
  */
 const init = () => {
+  // Destroy previous instances to prevent memory leak on re-init
+  destroy();
   correctAudio = _createAudio("/audio/correct.mp3");
   wrongAudio = _createAudio("/audio/wrong.mp3");
   clickAudio = _createAudio("/audio/click.mp3");

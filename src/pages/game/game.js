@@ -92,7 +92,11 @@ Page({
    */
   onSelectLevel(e) {
     const id = parseInt(e.currentTarget.dataset.id, 10);
-    if (!id || !levelManager.isLevelUnlocked(id)) return;
+    if (!id) return;
+    if (!levelManager.isLevelUnlocked(id)) {
+      wx.showToast({ title: "通过前面的关卡才能解锁", icon: "none" });
+      return;
+    }
     audioManager.playClick();
     wx.redirectTo({ url: `/pages/game/game?level=${id}` });
   },
@@ -190,7 +194,7 @@ Page({
     if (method === "lights_puzzle") {
       const size = level.interaction.gridSize || 3;
       const lights = Array(size * size).fill(true);
-      this.setData({ lights });
+      this.setData({ lights, lightsGridSize: size });
     }
 
     if (method === "sequence_tap") {
