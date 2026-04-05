@@ -33,13 +33,7 @@ Component({
         ? progress.completedLevels.length
         : 0;
 
-      try {
-        const openDataContext = wx.getOpenDataContext();
-        openDataContext.postMessage({ type: "render" });
-        this.setData({ useCanvas: true, myScore });
-      } catch (_e) {
-        this._fallbackMock(myScore);
-      }
+      this._fallbackMock(myScore);
     },
 
     /**
