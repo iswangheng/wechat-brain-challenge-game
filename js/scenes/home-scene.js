@@ -171,8 +171,13 @@ class HomeScene {
     // Clear screen
     ctx.clearRect(0, 0, width, height);
 
-    // Background gradient: #FFF8DC -> #F5F5F5
-    drawBackground(ctx, width, height, "#FFF8DC", "#F5F5F5");
+    // Deep blue-purple gradient matching game scene
+    const bg = ctx.createLinearGradient(0, 0, width * 0.3, height);
+    bg.addColorStop(0, "#667eea");
+    bg.addColorStop(0.5, "#5c6bc0");
+    bg.addColorStop(1, "#764ba2");
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, width, height);
 
     // Title area
     const titleY = height * 0.15;
@@ -187,14 +192,14 @@ class HomeScene {
     drawText(ctx, "你能过几关", width / 2, titleY + 30, {
       fontSize: 32,
       bold: true,
-      color: COLORS.text,
+      color: "#FFFFFF",
       align: "center",
     });
 
     // Subtitle
     drawText(ctx, "脑洞大挑战", width / 2, titleY + 68, {
       fontSize: 16,
-      color: COLORS.textMuted,
+      color: "rgba(255,255,255,0.7)",
       align: "center",
     });
 
@@ -226,7 +231,7 @@ class HomeScene {
         progressY + barHeight + 20,
         {
           fontSize: 14,
-          color: COLORS.textLight,
+          color: "rgba(255,255,255,0.7)",
           align: "center",
         }
       );

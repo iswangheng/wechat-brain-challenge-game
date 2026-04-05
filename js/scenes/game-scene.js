@@ -198,10 +198,8 @@ class GameScene {
    * Compute vertical layout positions
    */
   _computeLayout() {
-    this._progressBarY = this._topBarHeight + 6;
-    this._questionCardY = Math.floor(this.height * 0.10);
-    // Interaction area starts in the middle-lower part of the screen (thumb-friendly)
-    this._interactionY = Math.floor(this.height * 0.38);
+    this._questionCardY = Math.floor(this.height * 0.13);
+    this._interactionY = Math.floor(this.height * 0.35);
   }
 
   // ---------------------------------------------------------------------------
@@ -222,16 +220,16 @@ class GameScene {
     const cx = this.width / 2;
     const level = this.level;
 
-    // Back button (top-left, smaller)
+    // Back button (top-left, white on dark bg)
     this.backBtn = new Button({
       x: 30,
-      y: this._topBarHeight / 2,
+      y: this._topBarHeight / 2 + 4,
       width: 40,
       height: 32,
       text: "←",
       bg: "transparent",
-      color: COLORS.text,
-      fontSize: 20,
+      color: "#FFFFFF",
+      fontSize: 22,
       radius: 8,
       onTap: () => {
         audioManager.playClick();
@@ -240,16 +238,16 @@ class GameScene {
     });
     this.buttons.push(this.backBtn);
 
-    // Hint button (top-right, pill style) only if level has hint
+    // Hint button (top-right, semi-transparent white pill)
     if (level.hint) {
       this.hintBtn = new Button({
-        x: this.width - 40,
-        y: this._topBarHeight / 2,
-        width: 54,
+        x: this.width - 42,
+        y: this._topBarHeight / 2 + 4,
+        width: 58,
         height: 28,
-        text: "提示",
-        bg: COLORS.primary,
-        color: COLORS.white,
+        text: "💡提示",
+        bg: "rgba(255,255,255,0.2)",
+        color: "#FFFFFF",
         fontSize: 13,
         radius: 14,
         onTap: () => this._onHintTap(),
@@ -552,159 +550,127 @@ class GameScene {
     if (!level) return;
 
     ctx.clearRect(0, 0, width, height);
-    drawBackground(ctx, width, height, "#FFF8E1", "#FFF3E0");
-
-    // Decorative background circles for visual personality
-    this._renderDecorations();
-
+    this._renderBackground();
     this._renderTopBar();
-    this._renderProgressBar();
     this._renderQuestionCard();
     this._renderInteractionArea();
 
-    // Hint overlay
     if (this._hintVisible) {
       this._renderHintOverlay();
     }
-
-    // Result overlay
     if (this._showResult) {
       this._renderResultOverlay();
     }
   }
 
   /**
-   * Draw translucent decorative circles in the background for visual personality
+   * Rich gradient background with floating decorative shapes
    */
-  _renderDecorations() {
+  _renderBackground() {
     const { ctx, width, height } = this;
+
+    // Deep blue-purple gradient
+    const bg = ctx.createLinearGradient(0, 0, width * 0.3, height);
+    bg.addColorStop(0, "#667eea");
+    bg.addColorStop(0.5, "#5c6bc0");
+    bg.addColorStop(1, "#764ba2");
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, width, height);
+
+    // Floating decorative blobs
     ctx.save();
-
-    // Semi-transparent decorative circles at fixed positions (seeded by levelId)
-    const decorations = [
-      { x: width * 0.1, y: height * 0.15, r: 35, color: "rgba(255, 215, 0, 0.08)" },
-      { x: width * 0.85, y: height * 0.08, r: 25, color: "rgba(74, 144, 217, 0.06)" },
-      { x: width * 0.92, y: height * 0.55, r: 45, color: "rgba(255, 159, 67, 0.07)" },
-      { x: width * 0.08, y: height * 0.75, r: 30, color: "rgba(165, 94, 234, 0.06)" },
+    const blobs = [
+      { x: width * 0.15, y: height * 0.08, r: 60, c: "rgba(255,255,255,0.06)" },
+      { x: width * 0.88, y: height * 0.15, r: 40, c: "rgba(255,255,255,0.05)" },
+      { x: width * 0.75, y: height * 0.85, r: 70, c: "rgba(255,255,255,0.04)" },
+      { x: width * 0.1, y: height * 0.65, r: 50, c: "rgba(255,255,255,0.05)" },
+      { x: width * 0.5, y: height * 0.92, r: 35, c: "rgba(255,215,0,0.08)" },
     ];
-
-    for (const d of decorations) {
+    for (const b of blobs) {
       ctx.beginPath();
-      ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
-      ctx.fillStyle = d.color;
+      ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+      ctx.fillStyle = b.c;
       ctx.fill();
     }
-
     ctx.restore();
   }
 
   /**
-   * Render the top bar: level number, progress count, back button, hint button
+   * Top bar: back button, level badge, progress, hint
    */
   _renderTopBar() {
-    const { ctx, width, level } = this;
-    const barH = this._topBarHeight;
+    const { ctx, width } = this;
+    const cy = this._topBarHeight / 2 + 4;
     const progress = levelManager.getProgress();
-    const cx = width / 2;
-    const cy = barH / 2;
 
-    // Level badge: gold pill with white text (centered)
-    const badgeText = `第${this.levelId}关`;
+    // Back button
+    this.backBtn.render(ctx);
+
+    // Level badge - white rounded pill
+    const badgeText = `第 ${this.levelId} 关`;
     ctx.save();
-    ctx.font = "bold 15px sans-serif";
-    const badgeW = ctx.measureText(badgeText).width + 28;
-    const badgeH = 28;
-    const badgeX = cx - badgeW / 2;
+    ctx.font = "bold 14px sans-serif";
+    const badgeW = ctx.measureText(badgeText).width + 24;
+    const badgeH = 26;
+    const badgeX = width / 2 - badgeW / 2;
     const badgeY = cy - badgeH / 2;
 
-    // Pill background (gold gradient)
-    const pillGrad = ctx.createLinearGradient(badgeX, badgeY, badgeX + badgeW, badgeY);
-    pillGrad.addColorStop(0, "#FFD700");
-    pillGrad.addColorStop(1, "#FFA500");
-    ctx.fillStyle = pillGrad;
+    ctx.fillStyle = "rgba(255,255,255,0.2)";
     roundRect(ctx, badgeX, badgeY, badgeW, badgeH, badgeH / 2);
     ctx.fill();
-
-    // Badge text
-    ctx.fillStyle = COLORS.white;
+    ctx.fillStyle = "#FFFFFF";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(badgeText, cx, cy);
+    ctx.fillText(badgeText, width / 2, cy);
     ctx.restore();
 
-    // Progress count (right side, small)
-    const countX = this.hintBtn ? width - 90 : width - 24;
-    drawText(ctx, `${progress.current}/${progress.total}`, countX, cy, {
+    // Progress
+    const progText = `${progress.current}/${progress.total}`;
+    const progX = this.hintBtn ? width - 90 : width - 24;
+    drawText(ctx, progText, progX, cy, {
       fontSize: 12,
-      color: COLORS.textMuted,
+      color: "rgba(255,255,255,0.6)",
       align: "right",
     });
 
-    // Render back button and hint button
-    this.backBtn.render(ctx);
-    if (this.hintBtn) {
-      this.hintBtn.render(ctx);
-    }
+    if (this.hintBtn) this.hintBtn.render(ctx);
   }
 
   /**
-   * Render the progress bar
-   */
-  _renderProgressBar() {
-    const { ctx, width } = this;
-    const progress = levelManager.getProgress();
-    const barW = width - this._padding * 4;
-    const barX = this._padding * 2;
-
-    drawProgressBar(ctx, barX, this._progressBarY, barW, 4, progress.percentage, {
-      bgColor: "rgba(0,0,0,0.06)",
-      fillColor: COLORS.primary,
-    });
-  }
-
-  /**
-   * Render the question card with word-wrapped text
+   * Question card: frosted glass style with big text
    */
   _renderQuestionCard() {
     const { ctx, width, level } = this;
-    const cardX = this._padding;
+    const cardX = this._padding + 4;
     const cardY = this._questionCardY;
-    const cardW = width - this._padding * 2;
-
-    // Measure question text height to auto-size card
-    ctx.save();
-    ctx.font = "bold 22px sans-serif";
-    const textMaxW = cardW - 40;
+    const cardW = width - (this._padding + 4) * 2;
     const questionText = level.question || "";
+
+    // Measure text for auto-height
+    ctx.save();
+    ctx.font = "bold 20px sans-serif";
+    const textMaxW = cardW - 40;
     const textW = ctx.measureText(questionText).width;
     const lineCount = Math.max(1, Math.ceil(textW / textMaxW));
     ctx.restore();
+    const cardH = Math.max(80, lineCount * 30 + 50);
 
-    const cardH = Math.max(90, lineCount * 33 + 40);
-
-    // Card with shadow
-    drawCard(ctx, cardX, cardY, cardW, cardH, { radius: 16 });
-
-    // Gold left accent strip (4px)
+    // Frosted glass card
     ctx.save();
-    const accentW = 4;
-    const accentR = 16;
-    ctx.fillStyle = "#FFD700";
-    ctx.beginPath();
-    ctx.moveTo(cardX + accentR, cardY);
-    ctx.arcTo(cardX, cardY, cardX, cardY + cardH, accentR);
-    ctx.arcTo(cardX, cardY + cardH, cardX + accentW + accentR, cardY + cardH, accentR);
-    ctx.lineTo(cardX + accentW, cardY + cardH);
-    ctx.lineTo(cardX + accentW, cardY);
-    ctx.closePath();
+    ctx.fillStyle = "rgba(255,255,255,0.92)";
+    ctx.shadowColor = "rgba(0,0,0,0.12)";
+    ctx.shadowBlur = 16;
+    ctx.shadowOffsetY = 4;
+    roundRect(ctx, cardX, cardY, cardW, cardH, 20);
     ctx.fill();
+    ctx.shadowColor = "transparent";
     ctx.restore();
 
-    // Question text (word-wrapped, bigger font)
-    drawText(ctx, questionText, width / 2 + 2, cardY + cardH / 2, {
-      fontSize: 22,
+    // Question text
+    drawText(ctx, questionText, width / 2, cardY + cardH / 2, {
+      fontSize: 20,
       bold: true,
-      color: COLORS.text,
+      color: "#2D3436",
       align: "center",
       maxWidth: textMaxW,
       lineHeight: 1.5,
@@ -731,55 +697,57 @@ class GameScene {
   }
 
   /**
-   * Render option buttons (A/B/C/D)
+   * Render option buttons with colored label circles (no left border)
    */
   _renderOptionButtons() {
     const { ctx } = this;
     const correctIdx = this.level.answer;
+    const labelColors = this._optionAccentColors;
 
     for (let i = 0; i < this.optionButtons.length; i++) {
       const btn = this.optionButtons[i];
-      const accentColor = this._optionAccentColors[i] || "#4A90D9";
+      const labelColor = labelColors[i] || "#4A90D9";
 
-      // Update colors based on answer state
+      // Set colors based on answer state
       if (this._answered) {
         if (i === correctIdx) {
-          btn.bg = COLORS.green;
-          btn.color = COLORS.white;
+          btn.bg = "#2ED573";
+          btn.color = "#FFFFFF";
         } else if (i === this._selectedOption && !this._isCorrect) {
-          btn.bg = COLORS.red;
-          btn.color = COLORS.white;
+          btn.bg = "#FF4757";
+          btn.color = "#FFFFFF";
         } else {
-          // Fade out non-selected, non-correct options
-          btn.bg = COLORS.white;
-          btn.color = COLORS.textMuted;
+          btn.bg = "rgba(255,255,255,0.3)";
+          btn.color = "rgba(255,255,255,0.5)";
         }
+      } else {
+        btn.bg = "rgba(255,255,255,0.88)";
+        btn.color = "#2D3436";
       }
 
-      // Render the base button
       btn.render(ctx);
 
-      // Draw colored left accent strip (4px) on top of the button
+      // Draw colored label circle (A/B/C/D) on the left side of button
       if (!this._answered || i === correctIdx || i === this._selectedOption) {
         ctx.save();
-        const stripW = 4;
-        const bx = btn.left;
-        const by = btn.top;
-        const bh = btn.height;
-        const br = btn.radius;
+        const circleR = 14;
+        const circleX = btn.left + 24;
+        const circleY = btn.y;
 
-        ctx.fillStyle = this._answered && i === correctIdx ? COLORS.green
-          : this._answered && i === this._selectedOption ? COLORS.red
-          : accentColor;
+        const cColor = this._answered && i === correctIdx ? "#FFFFFF"
+          : this._answered && i === this._selectedOption ? "#FFFFFF"
+          : labelColor;
 
         ctx.beginPath();
-        ctx.moveTo(bx + br, by);
-        ctx.arcTo(bx, by, bx, by + bh, br);
-        ctx.arcTo(bx, by + bh, bx + stripW + br, by + bh, br);
-        ctx.lineTo(bx + stripW, by + bh);
-        ctx.lineTo(bx + stripW, by);
-        ctx.closePath();
+        ctx.arc(circleX, circleY, circleR, 0, Math.PI * 2);
+        ctx.fillStyle = this._answered ? "rgba(255,255,255,0.3)" : cColor;
         ctx.fill();
+
+        ctx.fillStyle = this._answered ? "#FFFFFF" : "#FFFFFF";
+        ctx.font = "bold 13px sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(OPTION_LABELS[i], circleX, circleY);
         ctx.restore();
       }
     }
@@ -897,7 +865,7 @@ class GameScene {
 
     drawText(ctx, texts[method] || level.hint || "操作你的手机", width / 2, y + 50, {
       fontSize: 16,
-      color: COLORS.textLight,
+      color: "rgba(255,255,255,0.7)",
       align: "center",
     });
   }
@@ -912,7 +880,7 @@ class GameScene {
 
     drawText(ctx, "颜色变蓝时点击", width / 2, this._interactionY + 20, {
       fontSize: 15,
-      color: COLORS.textLight,
+      color: "rgba(255,255,255,0.7)",
       align: "center",
     });
 
@@ -943,7 +911,7 @@ class GameScene {
 
     drawText(ctx, "点击灯泡，关掉所有灯", this.width / 2, this._interactionY + 10, {
       fontSize: 14,
-      color: COLORS.textLight,
+      color: "rgba(255,255,255,0.7)",
       align: "center",
     });
 
@@ -979,7 +947,7 @@ class GameScene {
 
     drawText(ctx, `按正确顺序点击 (${this._sequenceIndex}/${(this.level.interaction.steps || []).length})`, this.width / 2, this._interactionY + 10, {
       fontSize: 14,
-      color: COLORS.textLight,
+      color: "rgba(255,255,255,0.7)",
       align: "center",
     });
 
@@ -1008,7 +976,7 @@ class GameScene {
     drawCard(ctx, areaX, areaY, areaW, areaH);
     drawText(ctx, "✨ 刮开看答案 ✨", width / 2, areaY + areaH / 2, {
       fontSize: 16,
-      color: COLORS.textLight,
+      color: "rgba(255,255,255,0.7)",
       align: "center",
     });
 
@@ -1048,7 +1016,7 @@ class GameScene {
 
     drawText(ctx, "👆 拖动下方元素", width / 2, this._interactionY + 20, {
       fontSize: 14,
-      color: COLORS.textLight,
+      color: "rgba(255,255,255,0.7)",
       align: "center",
     });
 
@@ -1089,7 +1057,7 @@ class GameScene {
 
     drawText(ctx, `向${this._directionLabel(direction)}滑动`, width / 2, this._interactionY + 110, {
       fontSize: 16,
-      color: COLORS.textLight,
+      color: "rgba(255,255,255,0.7)",
       align: "center",
     });
   }
@@ -1168,7 +1136,7 @@ class GameScene {
 
     drawText(ctx, "双指放大", width / 2, this._interactionY + 120, {
       fontSize: 16,
-      color: COLORS.textLight,
+      color: "rgba(255,255,255,0.7)",
       align: "center",
     });
   }
@@ -1186,7 +1154,7 @@ class GameScene {
 
     drawText(ctx, "用两根手指同时触摸屏幕", width / 2, this._interactionY + 110, {
       fontSize: 16,
-      color: COLORS.textLight,
+      color: "rgba(255,255,255,0.7)",
       align: "center",
     });
   }
@@ -1218,7 +1186,7 @@ class GameScene {
 
     drawText(ctx, this._hintText, width / 2, cardY + 70, {
       fontSize: 15,
-      color: COLORS.textLight,
+      color: "rgba(255,255,255,0.7)",
       align: "center",
       maxWidth: cardW - 30,
       lineHeight: 1.4,
@@ -1269,7 +1237,7 @@ class GameScene {
     // Explanation
     drawText(ctx, this._resultExplanation, width / 2, cardY + 180, {
       fontSize: 17,
-      color: COLORS.textLight,
+      color: "rgba(255,255,255,0.7)",
       align: "center",
       maxWidth: cardW - 40,
       lineHeight: 1.5,

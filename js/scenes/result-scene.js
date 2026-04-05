@@ -129,8 +129,13 @@ class ResultScene {
     // Clear screen
     ctx.clearRect(0, 0, width, height);
 
-    // Background gradient
-    drawBackground(ctx, width, height, "#FFF8DC", "#F5F5F5");
+    // Deep blue-purple gradient
+    const bg = ctx.createLinearGradient(0, 0, width * 0.3, height);
+    bg.addColorStop(0, "#667eea");
+    bg.addColorStop(0.5, "#5c6bc0");
+    bg.addColorStop(1, "#764ba2");
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, width, height);
 
     // Card dimensions
     const cardW = width * 0.82;
