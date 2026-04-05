@@ -111,6 +111,31 @@ class GameScene {
 
     // Option border accent colors: A=blue, B=green, C=orange, D=purple
     this._optionAccentColors = ["#4A90D9", "#2ED573", "#FF9F43", "#A55EEA"];
+
+    // --- Engagement mechanics ---
+
+    // 1. Countdown timer (10s per question)
+    this._timerMax = 10;
+    this._timer = 10;
+    this._timerStartTime = null; // null = timer not running
+
+    // 2. Combo system
+    this._combo = 0;
+    this._comboShowTime = 0;
+
+    // 3. Star rating
+    this._stars = 0;
+
+    // 4. Particle effects
+    this._particles = [];
+
+    // 5. Screen shake
+    this._shakeTime = 0;
+
+    // 6. Milestone celebration
+    this._milestone = false;
+    this._milestoneTime = 0;
+    this._milestoneParticlesSpawned = false;
   }
 
   // ---------------------------------------------------------------------------
@@ -181,6 +206,25 @@ class GameScene {
     this._pinchScale = 1;
     this._sequenceIndex = 0;
     this._colorIndex = 0;
+
+    // Reset engagement state (combo persists across levels)
+    this._stars = 0;
+    this._milestone = false;
+    this._milestoneTime = 0;
+    this._milestoneParticlesSpawned = false;
+    // Don't reset this._combo here — it persists
+
+    // Start countdown timer only for timed level types
+    const timedTypes = ["riddle", "trivia", "text_trap"];
+    const method = this.level.interaction && this.level.interaction.method;
+    const isTrickChoice = this.level.type === "interactive" && method === "trick_choice";
+    if (timedTypes.includes(this.level.type) || isTrickChoice) {
+      this._timer = this._timerMax;
+      this._timerStartTime = Date.now();
+    } else {
+      this._timer = this._timerMax;
+      this._timerStartTime = null; // no timer for interactive levels
+    }
 
     // Compute layout
     this._computeLayout();
@@ -549,11 +593,43 @@ class GameScene {
     const { ctx, width, height, level } = this;
     if (!level) return;
 
+    // Update countdown timer
+    if (this._timerStartTime !== null) {
+      this._timer = Math.max(0, this._timerMax - (Date.now() - this._timerStartTime) / 1000);
+      // Auto-fail when time runs out
+      if (this._timer <= 0 && !this._answered && !this._showResult) {
+        this._timerStartTime = null;
+        this._handleWrong();
+        return; // _handleWrong will call render via _showResultOverlay
+      }
+    }
+
+    // Screen shake effect (applied via save/restore)
+    let shakeActive = false;
+    if (this._shakeTime > 0) {
+      const elapsed = Date.now() - this._shakeTime;
+      if (elapsed < 300) {
+        shakeActive = true;
+        const decay = 1 - elapsed / 300;
+        const shakeX = (Math.random() - 0.5) * 6 * decay;
+        const shakeY = (Math.random() - 0.5) * 6 * decay;
+        ctx.save();
+        ctx.translate(shakeX, shakeY);
+      } else {
+        this._shakeTime = 0;
+      }
+    }
+
     ctx.clearRect(0, 0, width, height);
     this._renderBackground();
     this._renderTopBar();
     this._renderQuestionCard();
     this._renderInteractionArea();
+
+    // Combo display (before overlays)
+    if (this._combo >= 2) {
+      this._renderCombo();
+    }
 
     if (this._hintVisible) {
       this._renderHintOverlay();
@@ -561,6 +637,19 @@ class GameScene {
     if (this._showResult) {
       this._renderResultOverlay();
     }
+
+    // Milestone celebration overlay
+    if (this._milestone) {
+      this._renderMilestone();
+    }
+
+    // Restore shake transform
+    if (shakeActive) {
+      ctx.restore();
+    }
+
+    // Particles render on top of everything (after restore so they don't shake)
+    this._updateAndRenderParticles();
   }
 
   /**
@@ -623,6 +712,37 @@ class GameScene {
     ctx.textBaseline = "middle";
     ctx.fillText(badgeText, width / 2, cy);
     ctx.restore();
+
+    // Countdown timer ring around badge
+    if (this._timerStartTime !== null) {
+      const ringCx = width / 2;
+      const ringCy = cy;
+      const ringR = badgeH / 2 + 6;
+      const fraction = this._timer / this._timerMax;
+      const startAngle = -Math.PI / 2;
+      const endAngle = startAngle + Math.PI * 2 * fraction;
+
+      // Color: green > 5s, yellow 3-5s, red < 3s
+      let ringColor = "#2ED573";
+      if (this._timer <= 3) ringColor = "#FF4757";
+      else if (this._timer <= 5) ringColor = "#FFD700";
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(ringCx, ringCy, ringR, startAngle, endAngle);
+      ctx.strokeStyle = ringColor;
+      ctx.lineWidth = 3;
+      ctx.lineCap = "round";
+      ctx.stroke();
+
+      // Timer seconds text (right of badge)
+      ctx.font = "bold 13px sans-serif";
+      ctx.fillStyle = ringColor;
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.fillText(Math.ceil(this._timer) + "", width / 2 + badgeW / 2 + 10, cy);
+      ctx.restore();
+    }
 
     // Progress
     const progText = `${progress.current}/${progress.total}`;
@@ -1218,8 +1338,17 @@ class GameScene {
 
     drawCard(ctx, cardX, cardY, cardW, cardH);
 
+    // Star rating (above emoji)
+    if (this._isCorrect && this._stars > 0) {
+      const starStr = "\u2B50".repeat(this._stars) + "\u2606".repeat(3 - this._stars);
+      drawText(ctx, starStr, width / 2, cardY + 22, {
+        fontSize: 22,
+        align: "center",
+      });
+    }
+
     // Emoji
-    drawText(ctx, this._resultEmoji, width / 2, cardY + 50, {
+    drawText(ctx, this._resultEmoji, width / 2, cardY + 56, {
       fontSize: 52,
       align: "center",
     });
@@ -1732,12 +1861,48 @@ class GameScene {
     this._answered = true;
     this._isCorrect = true;
 
+    // Stop countdown timer
+    const elapsedSec = this._timerStartTime !== null
+      ? (Date.now() - this._timerStartTime) / 1000
+      : 999;
+    this._timerStartTime = null;
+
     audioManager.playCorrect();
     levelManager.completeLevel(this.levelId);
 
     // Stop sensors and timers
     sensorManager.stopAll();
     this._clearColorWaitTimer();
+
+    // Combo system
+    this._combo++;
+    this._comboShowTime = Date.now();
+
+    // Star rating
+    const progress = storage.getProgress ? storage.getProgress() : null;
+    const hintUsed = progress && progress.hintUsed ? progress.hintUsed.includes(this.levelId) : false;
+    if (this._timerStartTime === null && elapsedSec >= 999) {
+      // Interactive level (no timer): stars based on hint
+      this._stars = hintUsed ? 2 : 3;
+    } else {
+      if (elapsedSec <= 4 && !hintUsed) {
+        this._stars = 3;
+      } else if (elapsedSec <= 7 || hintUsed) {
+        this._stars = 2;
+      } else {
+        this._stars = 1;
+      }
+    }
+
+    // Particle effects — burst from center
+    this._spawnParticles(this.width / 2, this.height / 2, 25, ["#FFD700", "#FF9F43", "#FFEB3B"]);
+
+    // Milestone celebration every 10 levels
+    if (this.levelId % 10 === 0) {
+      this._milestone = true;
+      this._milestoneTime = Date.now();
+      this._milestoneParticlesSpawned = false;
+    }
 
     // Show interstitial ad if due
     if (adManager.shouldShowInterstitial(this.levelId)) {
@@ -1755,6 +1920,15 @@ class GameScene {
     this._answerLocked = true;
     this._answered = true;
     this._isCorrect = false;
+
+    // Stop countdown timer
+    this._timerStartTime = null;
+
+    // Reset combo
+    this._combo = 0;
+
+    // Screen shake
+    this._shakeTime = Date.now();
 
     audioManager.playWrong();
     levelManager.recordWrongAnswer();
@@ -1832,6 +2006,138 @@ class GameScene {
     }
 
     this.render();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Engagement mechanics rendering
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Render combo counter near top of screen
+   */
+  _renderCombo() {
+    const { ctx, width } = this;
+    const elapsed = Date.now() - this._comboShowTime;
+    // Animated scale: pops up to 1.3 then back to 1.0 over 500ms
+    let scale = 1.0;
+    if (elapsed < 250) {
+      scale = 1.0 + 0.3 * (elapsed / 250);
+    } else if (elapsed < 500) {
+      scale = 1.3 - 0.3 * ((elapsed - 250) / 250);
+    }
+
+    const text = "\uD83D\uDD25 " + this._combo + "\u8FDE\u51FB!";
+    const cx = width / 2;
+    const cy = this._topBarHeight + 30;
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(scale, scale);
+    ctx.font = "bold 18px sans-serif";
+    ctx.fillStyle = "#FFD700";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.shadowColor = "rgba(0,0,0,0.3)";
+    ctx.shadowBlur = 4;
+    ctx.fillText(text, 0, 0);
+    ctx.restore();
+  }
+
+  /**
+   * Spawn particles at a position
+   * @param {number} x - center x
+   * @param {number} y - center y
+   * @param {number} count - number of particles
+   * @param {string[]} colors - array of color strings
+   */
+  _spawnParticles(x, y, count, colors) {
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 2 + Math.random() * 4;
+      this._particles.push({
+        x: x,
+        y: y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        size: 3 + Math.random() * 4,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        life: 1.0,
+        alpha: 1.0,
+      });
+    }
+  }
+
+  /**
+   * Update particle physics and render them
+   */
+  _updateAndRenderParticles() {
+    const { ctx } = this;
+    const remaining = [];
+
+    for (const p of this._particles) {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.1; // gravity
+      p.life -= 0.02;
+      p.alpha = Math.max(0, p.life);
+
+      if (p.life > 0) {
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.fill();
+        ctx.restore();
+        remaining.push(p);
+      }
+    }
+
+    this._particles = remaining;
+  }
+
+  /**
+   * Render milestone celebration overlay
+   */
+  _renderMilestone() {
+    const { ctx, width, height } = this;
+    const elapsed = Date.now() - this._milestoneTime;
+
+    if (elapsed > 2000) {
+      this._milestone = false;
+      return;
+    }
+
+    // Spawn extra particles once
+    if (!this._milestoneParticlesSpawned) {
+      this._milestoneParticlesSpawned = true;
+      const multiColors = ["#FFD700", "#FF4757", "#2ED573", "#4A90D9", "#FF6B81", "#A55EEA"];
+      this._spawnParticles(width / 2, height / 2, 50, multiColors);
+    }
+
+    // Animated scale
+    let scale = 1.0;
+    if (elapsed < 400) {
+      scale = 0.5 + 0.7 * (elapsed / 400);
+    } else if (elapsed < 600) {
+      scale = 1.2 - 0.2 * ((elapsed - 400) / 200);
+    }
+
+    const text = "\uD83C\uDF8A \u606D\u559C\u901A\u8FC7 " + this.levelId + " \u5173\uFF01\uD83C\uDF8A";
+    const cx = width / 2;
+    const cy = height * 0.25;
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(scale, scale);
+    ctx.font = "bold 24px sans-serif";
+    ctx.fillStyle = "#FFD700";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.shadowColor = "rgba(0,0,0,0.5)";
+    ctx.shadowBlur = 8;
+    ctx.fillText(text, 0, 0);
+    ctx.restore();
   }
 
   // ---------------------------------------------------------------------------
