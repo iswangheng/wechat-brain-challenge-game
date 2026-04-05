@@ -144,11 +144,11 @@ class GameScene {
 
   /**
    * Enter the scene with given params
-   * @param {{ level: number }} params
+   * @param {{ position: number }} params - 1-based position in play order
    */
   onEnter(params = {}) {
-    this.levelId = params.level || 1;
-    this._loadLevel(this.levelId);
+    this._position = params.position || params.level || 1;
+    this._loadLevelAtPosition(this._position);
   }
 
   /**
@@ -170,15 +170,16 @@ class GameScene {
   // ---------------------------------------------------------------------------
 
   /**
-   * Load a level by id and reset all state
-   * @param {number} id
+   * Load a level by play-order position
+   * @param {number} position - 1-based
    */
-  _loadLevel(id) {
+  _loadLevelAtPosition(position) {
     sensorManager.stopAll();
     this._clearColorWaitTimer();
 
-    this.levelId = id;
-    this.level = levelManager.getLevel(id);
+    this._position = position;
+    this.levelId = position; // Display as "第 N 关"
+    this.level = levelManager.getLevelAtPosition(position);
 
     if (!this.level) {
       // No more levels, go to result
@@ -1959,8 +1960,8 @@ class GameScene {
       this._resultEmoji = "🎉";
       this._resultComment = correctPraises[Math.floor(Math.random() * correctPraises.length)];
     } else {
-      this._resultEmoji = "😅";
-      this._resultComment = this.level.funnyComment || "答错了！再想想？";
+      this._resultEmoji = "💀";
+      this._resultComment = `挑战结束！你闯到了第 ${this._position} 关`;
     }
     this._resultExplanation = this.level.explanation || "";
 
@@ -1970,41 +1971,42 @@ class GameScene {
 
     if (isCorrect) {
       // Check if there's a next level
-      const nextId = this.levelId + 1;
+      const nextPos = this._position + 1;
       const totalLevels = levelManager.getLevelCount();
-      const hasNext = nextId <= totalLevels;
+      const hasNext = nextPos <= totalLevels;
 
       this.resultBtn = new Button({
         x: cx,
         y: btnY,
         width: 180,
         height: 48,
-        text: hasNext ? "继续" : "查看成绩",
+        text: hasNext ? "下一关" : "查看成绩",
         bg: COLORS.green,
         color: COLORS.white,
         fontSize: 18,
         radius: 24,
         onTap: () => {
           if (hasNext) {
-            this._loadLevel(nextId);
+            this._loadLevelAtPosition(nextPos);
           } else {
             this.sceneManager.switchTo("result");
           }
         },
       });
     } else {
+      // Wrong answer = challenge over! Show score and go to result
       this.resultBtn = new Button({
         x: cx,
         y: btnY,
         width: 180,
         height: 48,
-        text: "再试一次",
-        bg: COLORS.primary,
-        color: COLORS.text,
+        text: "查看成绩",
+        bg: "#FF4757",
+        color: COLORS.white,
         fontSize: 18,
         radius: 24,
         onTap: () => {
-          this._loadLevel(this.levelId);
+          this.sceneManager.switchTo("result", { failedAt: this._position });
         },
       });
     }

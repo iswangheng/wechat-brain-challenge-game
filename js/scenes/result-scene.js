@@ -44,10 +44,13 @@ class ResultScene {
   /**
    * Called when the scene is entered. Loads progress data and builds UI.
    */
-  onEnter() {
+  onEnter(params = {}) {
     this.progress = getProgress();
     this.allDone = isAllCompleted();
-    this.comment = this._getComment(this.progress.percentage);
+    this.failedAt = params.failedAt || 0;
+    this.comment = this.failedAt
+      ? this._getFailComment(this.failedAt)
+      : this._getComment(this.progress.percentage);
 
     this._buildButtons();
     this.render();
@@ -66,6 +69,14 @@ class ResultScene {
     return "刚刚热身，好戏还在后头！🎮";
   }
 
+  _getFailComment(level) {
+    if (level >= 60) return "太强了！差一点就通关了！💪";
+    if (level >= 40) return "很不错！已经超过大多数人了！🔥";
+    if (level >= 20) return "不赖！再接再厉！😎";
+    if (level >= 10) return "热身完毕，下次冲更远！🎮";
+    return "这才刚开始，再来一次！💥";
+  }
+
   /**
    * Build interactive buttons based on current state.
    */
@@ -79,27 +90,30 @@ class ResultScene {
     // Calculate button area starting position (below the card)
     let btnY = this.height * 0.78;
 
-    // "继续挑战" button - only if not all completed
-    if (!this.allDone) {
-      const rawProgress = storage.getProgress();
-      const nextLevel = rawProgress.currentLevel || 1;
-      this.continueBtn = new Button({
-        x: cx,
-        y: btnY,
-        width: btnW,
-        height: btnH,
-        text: "继续挑战",
-        bg: COLORS.primary,
-        color: COLORS.text,
-        fontSize: 20,
-        onTap: () => {
-          playClick();
-          this.sceneManager.switchTo("game", { level: nextLevel });
-        },
-      });
-      this.buttons.push(this.continueBtn);
-      btnY += btnH + gap;
-    }
+    // Main action button
+    const levelManager = require("../utils/level-manager");
+    this.continueBtn = new Button({
+      x: cx,
+      y: btnY,
+      width: btnW,
+      height: btnH,
+      text: this.failedAt ? "再来一次" : (this.allDone ? "再来一遍" : "继续挑战"),
+      bg: COLORS.primary,
+      color: COLORS.text,
+      fontSize: 20,
+      onTap: () => {
+        playClick();
+        if (this.failedAt || this.allDone) {
+          levelManager.resetAndShuffle();
+          this.sceneManager.switchTo("game", { position: 1 });
+        } else {
+          const rawProgress = storage.getProgress();
+          this.sceneManager.switchTo("game", { position: rawProgress.currentLevel || 1 });
+        }
+      },
+    });
+    this.buttons.push(this.continueBtn);
+    btnY += btnH + gap;
 
     // "回到首页" button - secondary style
     this.homeBtn = new Button({
@@ -147,30 +161,34 @@ class ResultScene {
     // Draw the card
     drawCard(ctx, cardX, cardY, cardW, cardH);
 
-    // Trophy emoji
-    drawText(ctx, "🏆", cardCx, cardY + 50, {
+    // Emoji
+    const emoji = this.failedAt ? "💀" : "🏆";
+    drawText(ctx, emoji, cardCx, cardY + 50, {
       fontSize: 52,
       align: "center",
     });
 
-    // Title: "挑战结果"
-    drawText(ctx, "挑战结果", cardCx, cardY + 110, {
+    // Title
+    const title = this.failedAt ? "挑战结束" : "挑战结果";
+    drawText(ctx, title, cardCx, cardY + 110, {
       fontSize: 24,
       bold: true,
       color: COLORS.text,
       align: "center",
     });
 
-    // Big completed count number
-    drawText(ctx, `${progress.current}`, cardCx, cardY + 175, {
+    // Big number: show failed-at position or completed count
+    const bigNumber = this.failedAt || progress.current;
+    drawText(ctx, `${bigNumber}`, cardCx, cardY + 175, {
       fontSize: 64,
       bold: true,
       color: COLORS.primary,
       align: "center",
     });
 
-    // Label: "关已通过"
-    drawText(ctx, "关已通过", cardCx, cardY + 220, {
+    // Label
+    const label = this.failedAt ? "关 · 挑战失败" : "关已通过";
+    drawText(ctx, label, cardCx, cardY + 220, {
       fontSize: 16,
       color: COLORS.textLight,
       align: "center",

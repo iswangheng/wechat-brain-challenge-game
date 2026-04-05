@@ -89,7 +89,7 @@ class HomeScene {
         fontSize: 20,
         onTap: () => {
           audioManager.playClick();
-          this.sceneManager.switchTo("game", { level: this.currentLevel });
+          this.sceneManager.switchTo("game", { position: this.currentLevel });
         },
       });
       this.buttons.push(this.continueBtn);
@@ -103,33 +103,35 @@ class HomeScene {
         y: btnY,
         width: btnW,
         height: btnH,
-        text: "已全部通关 再来一遍？",
+        text: "全部通关！再来一遍？",
         bg: COLORS.green,
         color: COLORS.white,
         fontSize: 18,
         onTap: () => {
           audioManager.playClick();
-          this.sceneManager.switchTo("game", { level: 1 });
+          levelManager.resetAndShuffle();
+          this.sceneManager.switchTo("game", { position: 1 });
         },
       });
       this.buttons.push(this.continueBtn);
       btnY += btnH + gap;
     }
 
-    // "从头开始" button
+    // "从头开始" / "开始挑战" button
     const isSecondary = this.hasProgress;
     this.startBtn = new Button({
       x: cx,
       y: btnY,
       width: btnW,
       height: btnH - (isSecondary ? 6 : 0),
-      text: "从头开始",
+      text: isSecondary ? "重新挑战" : "开始挑战",
       bg: isSecondary ? COLORS.white : COLORS.primary,
       color: isSecondary ? COLORS.text : COLORS.text,
       fontSize: isSecondary ? 16 : 20,
       onTap: () => {
         audioManager.playClick();
-        this.sceneManager.switchTo("game", { level: 1 });
+        levelManager.resetAndShuffle();
+        this.sceneManager.switchTo("game", { position: 1 });
       },
     });
     this.buttons.push(this.startBtn);
