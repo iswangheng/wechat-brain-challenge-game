@@ -1686,8 +1686,22 @@ class GameScene {
    */
   _showResultOverlay(isCorrect) {
     this._showResult = true;
-    this._resultEmoji = isCorrect ? "🎉" : "😅";
-    this._resultComment = this.level.funnyComment || (isCorrect ? "答对了！" : "答错了！");
+
+    const correctPraises = [
+      "厉害了！答对了！👏",
+      "没错！你真聪明！🧠",
+      "完全正确！太强了！💪",
+      "恭喜你，答对了！✨",
+      "秒答！大佬！🎯",
+    ];
+
+    if (isCorrect) {
+      this._resultEmoji = "🎉";
+      this._resultComment = correctPraises[Math.floor(Math.random() * correctPraises.length)];
+    } else {
+      this._resultEmoji = "😅";
+      this._resultComment = this.level.funnyComment || "答错了！再想想？";
+    }
     this._resultExplanation = this.level.explanation || "";
 
     const cx = this.width / 2;
