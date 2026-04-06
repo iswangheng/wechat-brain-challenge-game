@@ -11,6 +11,10 @@ class SceneManager {
     this._scenes = {};
     this._current = null;
     this._currentName = "";
+
+    // Fade-from-black transition state
+    this._transitioning = false;
+    this._transitionAlpha = 0;
   }
 
   /**
@@ -45,6 +49,10 @@ class SceneManager {
     if (this._current.onEnter) {
       this._current.onEnter(params);
     }
+
+    // Start fade-from-black transition
+    this._transitioning = true;
+    this._transitionAlpha = 1.0;
   }
 
   /**
@@ -53,6 +61,21 @@ class SceneManager {
   render() {
     if (this._current && this._current.render) {
       this._current.render();
+    }
+
+    // Fade-from-black overlay
+    if (this._transitioning) {
+      this.ctx.save();
+      this.ctx.globalAlpha = this._transitionAlpha;
+      this.ctx.fillStyle = "#000000";
+      this.ctx.fillRect(0, 0, this.width, this.height);
+      this.ctx.restore();
+
+      this._transitionAlpha -= 1 / 18; // ~300ms at 60fps
+      if (this._transitionAlpha <= 0) {
+        this._transitionAlpha = 0;
+        this._transitioning = false;
+      }
     }
   }
 

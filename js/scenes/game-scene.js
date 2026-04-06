@@ -90,6 +90,9 @@ class GameScene {
     this._pinchStartDist = 0;
     this._pinchScale = 1;
 
+    // Tutorial overlay
+    this._showTutorial = false;
+
     // Char grid for text_trap
     this._charCells = [];
 
@@ -254,6 +257,11 @@ class GameScene {
 
     // Setup interactive sensors if needed
     this._setupInteractive();
+
+    // Show tutorial on first ever game
+    if (this._position === 1 && !storage.get("tutorial_done")) {
+      this._showTutorial = true;
+    }
 
     this.render();
   }
@@ -657,6 +665,10 @@ class GameScene {
     }
     if (this._showResult) {
       this._renderResultOverlay();
+    }
+
+    if (this._showTutorial) {
+      this._renderTutorial();
     }
 
     // Milestone celebration overlay
@@ -1357,6 +1369,92 @@ class GameScene {
   }
 
   /**
+   * Render first-time tutorial overlay
+   */
+  _renderTutorial() {
+    const { ctx, width, height } = this;
+
+    // Semi-transparent dark overlay
+    ctx.fillStyle = "rgba(0, 0, 0, 0.65)";
+    ctx.fillRect(0, 0, width, height);
+
+    // White card
+    const cardW = width * 0.78;
+    const cardH = 260;
+    const cardX = (width - cardW) / 2;
+    const cardY = (height - cardH) / 2;
+    const r = 16;
+
+    ctx.fillStyle = "#FFFFFF";
+    ctx.beginPath();
+    ctx.moveTo(cardX + r, cardY);
+    ctx.lineTo(cardX + cardW - r, cardY);
+    ctx.arcTo(cardX + cardW, cardY, cardX + cardW, cardY + r, r);
+    ctx.lineTo(cardX + cardW, cardY + cardH - r);
+    ctx.arcTo(cardX + cardW, cardY + cardH, cardX + cardW - r, cardY + cardH, r);
+    ctx.lineTo(cardX + r, cardY + cardH);
+    ctx.arcTo(cardX, cardY + cardH, cardX, cardY + cardH - r, r);
+    ctx.lineTo(cardX, cardY + r);
+    ctx.arcTo(cardX, cardY, cardX + r, cardY, r);
+    ctx.closePath();
+    ctx.fill();
+
+    // Title
+    ctx.fillStyle = "#333333";
+    ctx.font = "bold 20px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillText("\uD83C\uDFAE 玩法说明", width / 2, cardY + 24);
+
+    // Instructions
+    const instructions = [
+      "\uD83D\uDCDD 选择正确答案闯关",
+      "\u23F1 每题限时10秒",
+      "\u274C 答错即挑战结束",
+      "\uD83D\uDD25 连续答对获得combo加成",
+    ];
+    ctx.fillStyle = "#555555";
+    ctx.font = "15px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    const lineH = 15 * 1.6;
+    const instrY = cardY + 66;
+    for (let i = 0; i < instructions.length; i++) {
+      ctx.fillText(instructions[i], width / 2, instrY + i * lineH);
+    }
+
+    // Button
+    const btnW = cardW * 0.6;
+    const btnH = 40;
+    const btnX = (width - btnW) / 2;
+    const btnY = cardY + cardH - 60;
+    const btnR = 20;
+
+    const btnGrad = ctx.createLinearGradient(btnX, btnY, btnX + btnW, btnY);
+    btnGrad.addColorStop(0, "#667eea");
+    btnGrad.addColorStop(1, "#764ba2");
+    ctx.fillStyle = btnGrad;
+    ctx.beginPath();
+    ctx.moveTo(btnX + btnR, btnY);
+    ctx.lineTo(btnX + btnW - btnR, btnY);
+    ctx.arcTo(btnX + btnW, btnY, btnX + btnW, btnY + btnR, btnR);
+    ctx.lineTo(btnX + btnW, btnY + btnH - btnR);
+    ctx.arcTo(btnX + btnW, btnY + btnH, btnX + btnW - btnR, btnY + btnH, btnR);
+    ctx.lineTo(btnX + btnR, btnY + btnH);
+    ctx.arcTo(btnX, btnY + btnH, btnX, btnY + btnH - btnR, btnR);
+    ctx.lineTo(btnX, btnY + btnR);
+    ctx.arcTo(btnX, btnY, btnX + btnR, btnY, btnR);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = "#FFFFFF";
+    ctx.font = "bold 16px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("点击开始挑战", width / 2, btnY + btnH / 2);
+  }
+
+  /**
    * Render result overlay (correct/wrong)
    */
   _renderResultOverlay() {
@@ -1523,6 +1621,14 @@ class GameScene {
    * @param {TouchEvent} e
    */
   onTouchEnd(x, y, e) {
+    // Tutorial overlay: consume tap and dismiss
+    if (this._showTutorial) {
+      this._showTutorial = false;
+      storage.set("tutorial_done", true);
+      this.render();
+      return;
+    }
+
     // Result overlay buttons
     if (this._showResult) {
       if (this.shareBtn && this.shareBtn._pressed && this.shareBtn.hitTest(x, y) && this.shareBtn.onTap) {

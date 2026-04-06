@@ -20,12 +20,13 @@ audioManager.setEnabled(settings.soundEnabled);
 const sceneManager = new SceneManager(ctx, canvas, width, height);
 
 // Register scenes (lazy-loaded)
+sceneManager.register("splash", () => require("./js/scenes/splash-scene"));
 sceneManager.register("home", () => require("./js/scenes/home-scene"));
 sceneManager.register("game", () => require("./js/scenes/game-scene"));
 sceneManager.register("result", () => require("./js/scenes/result-scene"));
 
-// Start with home scene
-sceneManager.switchTo("home");
+// Start with splash scene
+sceneManager.switchTo("splash");
 
 // Touch event routing
 wx.onTouchStart((e) => {
